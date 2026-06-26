@@ -10,8 +10,8 @@ services:
       context: .
       dockerfile: Dockerfile
       # Public values inlined into the browser bundle at build time.
-      # Interpolated from your env file — build with:
-      #   docker compose --env-file .env.local up -d --build
+      # Auto-interpolated from the project's .env file (compose reads .env by
+      # default), so a plain `docker compose up -d --build` is enough.
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
@@ -25,7 +25,7 @@ services:
     ports:
       - "127.0.0.1:3001:3000"
     env_file:
-      - .env.local
+      - .env
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -48,7 +48,7 @@ services:
     ports:
       - "127.0.0.1:3001:3000"
     env_file:
-      - .env.local
+      - .env
     volumes:
       - .:/app
       - /app/node_modules

@@ -25,9 +25,9 @@ at a global scope, and always run compose commands from this directory (or with
 1. **DNS** — add an A record: `menudrop.quasarlabs.in` → the server's IP
    (same IP as quasar).
 
-2. **Environment** — create `.env.local` on the server (do NOT commit it):
+2. **Environment** — create `.env` on the server (do NOT commit it):
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    # then fill real values, and set:
    #   DEMO_MODE=false
    #   NEXT_PUBLIC_APP_URL=https://menudrop.quasarlabs.in
@@ -40,17 +40,17 @@ at a global scope, and always run compose commands from this directory (or with
 3. **Database** — run `supabase/schema.sql` in your Supabase project (or the
    `ALTER TABLE` migrations if upgrading an existing one).
 
-4. **Start the container** (only affects menudrop). Use `--env-file .env.local`
-   so the public `NEXT_PUBLIC_*` values get inlined into the browser bundle at
-   build time (server secrets stay runtime-only and are never baked in):
+4. **Start the container** (only affects menudrop). Compose auto-reads `.env`,
+   so the public `NEXT_PUBLIC_*` values are inlined into the browser bundle at
+   build time and the server secrets are loaded at runtime — no extra flags:
    ```bash
-   docker compose --env-file .env.local up -d --build
+   docker compose up -d --build
    docker compose ps           # menudrop-web should be healthy on 127.0.0.1:3001
    curl -I http://127.0.0.1:3001/login
    ```
-   > If you build without `--env-file .env.local`, the build still succeeds but
-   > the browser bundle uses placeholder Supabase values and client-side auth
-   > won't work. Always pass it for production.
+   > The env file MUST be named `.env` (compose reads it automatically). If you
+   > keep it as `.env.local` instead, you'd have to add `--env-file .env.local`
+   > to every build command.
 
 5. **nginx** — install the server block and reload (graceful):
    ```bash
@@ -71,7 +71,7 @@ at a global scope, and always run compose commands from this directory (or with
 ```bash
 cd /path/to/menudrop
 git pull
-docker compose --env-file .env.local up -d --build   # ONLY menudrop-web
+docker compose up -d --build          # ONLY menudrop-web
 docker image prune -f                                 # removes only dangling images
 ```
 

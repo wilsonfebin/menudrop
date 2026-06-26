@@ -117,7 +117,10 @@ function initials(name: string): string {
 export async function composeSpecialsImage(
   dishes: Dish[],
   background: BackgroundOption,
-  profile: Pick<RestaurantProfile, 'name' | 'logo_url' | 'street' | 'city' | 'display_phone'>,
+  profile: Pick<
+    RestaurantProfile,
+    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color'
+  >,
   format: ImageFormat = 'portrait'
 ): Promise<{ png: Buffer; source: string }> {
   const { w, h } = IMAGE_FORMATS[format] ?? IMAGE_FORMATS.portrait

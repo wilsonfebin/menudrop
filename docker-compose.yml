@@ -1,0 +1,44 @@
+# Isolated compose project — commands scoped to "menudrop" never touch other
+# apps (e.g. quasar). Deploy with:  docker compose up -d --build
+# The app binds to 127.0.0.1:3001 only; nginx on the host proxies the
+# subdomain to it. Quasar keeps its own container/port untouched.
+name: menudrop
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: menudrop-web
+    # Localhost-only so it never clashes with another app's port and isn't
+    # exposed publicly — nginx is the only thing that reaches it.
+    ports:
+      - "127.0.0.1:3001:3000"
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/login',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Local dev convenience (not used in production).
+  # Run with:  docker compose --profile dev up web-dev
+  web-dev:
+    image: node:20-bookworm-slim
+    container_name: menudrop-web-dev
+    working_dir: /app
+    profiles: ["dev"]
+    command: sh -c "apt-get update && apt-get install -y libvips-dev && npm install && npm run dev"
+    ports:
+      - "127.0.0.1:3001:3000"
+    env_file:
+      - .env.local
+    volumes:
+      - .:/app
+      - /app/node_modules

@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────
+#  MenuDrop is a Next.js 14 / TypeScript application.
+#  Its runtime dependencies are managed by npm via package.json — there
+#  is NO Python runtime in this project.
+#
+#  This file documents the SYSTEM-LEVEL requirements needed to build and
+#  run MenuDrop, for parity with infra tooling that expects a
+#  requirements manifest. Install Node deps with `npm install`.
+# ─────────────────────────────────────────────────────────────────────
+#
+# System requirements:
+#   node >= 18.18.0
+#   npm  >= 9
+#   libvips        # native dependency of `sharp` (image generation)
+#
+# Node dependencies (authoritative list lives in package.json):
+#   next==14.2.15
+#   react==18.3.1
+#   @supabase/supabase-js==2.45.4
+#   @supabase/auth-helpers-nextjs==0.10.0
+#   openai==4.67.3            # LLM: OCR + caption generation
+#   cloudinary==2.5.1         # logo / asset storage
+#   razorpay==2.9.4           # subscriptions
+#   sharp==0.33.5             # stateless image compositing
+#   zustand==4.5.5            # client state
+#   date-fns==3.6.0
+#
+# To install everything:
+#   npm install

@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: #f7f6f2;
+  color: #1a1917;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-blue text-white font-semibold rounded-xl px-6 py-3
+           active:scale-[0.98] transition disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply bg-white text-brand-blue border border-ui-border font-semibold
+           rounded-xl px-6 py-3 active:scale-[0.98] transition;
+  }
+  .input {
+    @apply w-full rounded-xl border border-ui-border bg-white px-4 py-3
+           text-ui-text placeholder:text-ui-text-ter
+           focus:outline-none focus:ring-2 focus:ring-brand-blue-mid;
+  }
+  .card {
+    @apply bg-white rounded-card border border-ui-border p-4;
+  }
+}

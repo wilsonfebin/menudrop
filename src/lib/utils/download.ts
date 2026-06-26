@@ -1,0 +1,43 @@
+import type { BackgroundOption, Dish, ImageFormat, RestaurantProfile } from '@/types'
+
+type ProfilePayload = Pick<
+  RestaurantProfile,
+  'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color'
+>
+
+// POST to the image API and return the rendered PNG as a Blob.
+export async function requestSpecialsBlob(
+  dishes: Dish[],
+  background: BackgroundOption,
+  profile: ProfilePayload,
+  format: ImageFormat = 'portrait'
+): Promise<Blob> {
+  const res = await fetch('/api/image/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dishes, background, profile, format }),
+  })
+  if (!res.ok) throw new Error('Image generation failed')
+  return res.blob()
+}
+
+export function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+export async function downloadSpecialsImage(
+  dishes: Dish[],
+  background: BackgroundOption,
+  profile: ProfilePayload,
+  format: ImageFormat = 'portrait'
+): Promise<void> {
+  const blob = await requestSpecialsBlob(dishes, background, profile, format)
+  triggerDownload(blob, `${(profile.name || 'menudrop').replace(/\s+/g, '-')}-specials.png`)
+}

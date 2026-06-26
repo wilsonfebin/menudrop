@@ -9,6 +9,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Public values inlined into the browser bundle at build time.
+      # Interpolated from your env file — build with:
+      #   docker compose --env-file .env.local up -d --build
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID:-}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+        NEXT_PUBLIC_POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY:-}
+        NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST:-}
     container_name: menudrop-web
     # Localhost-only so it never clashes with another app's port and isn't
     # exposed publicly — nginx is the only thing that reaches it.

@@ -40,12 +40,17 @@ at a global scope, and always run compose commands from this directory (or with
 3. **Database** — run `supabase/schema.sql` in your Supabase project (or the
    `ALTER TABLE` migrations if upgrading an existing one).
 
-4. **Start the container** (only affects menudrop):
+4. **Start the container** (only affects menudrop). Use `--env-file .env.local`
+   so the public `NEXT_PUBLIC_*` values get inlined into the browser bundle at
+   build time (server secrets stay runtime-only and are never baked in):
    ```bash
-   docker compose up -d --build
+   docker compose --env-file .env.local up -d --build
    docker compose ps           # menudrop-web should be healthy on 127.0.0.1:3001
    curl -I http://127.0.0.1:3001/login
    ```
+   > If you build without `--env-file .env.local`, the build still succeeds but
+   > the browser bundle uses placeholder Supabase values and client-side auth
+   > won't work. Always pass it for production.
 
 5. **nginx** — install the server block and reload (graceful):
    ```bash
@@ -66,8 +71,8 @@ at a global scope, and always run compose commands from this directory (or with
 ```bash
 cd /path/to/menudrop
 git pull
-docker compose up -d --build        # rebuilds + recreates ONLY menudrop-web
-docker image prune -f               # safe: removes only dangling images
+docker compose --env-file .env.local up -d --build   # ONLY menudrop-web
+docker image prune -f                                 # removes only dangling images
 ```
 
 Quasar's container is never referenced, so it keeps running throughout.

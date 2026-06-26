@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { verifyPaymentSignature } from '@/lib/razorpay'
 import type { Plan } from '@/types'
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Activate the subscription (service-role write, bypasses RLS).
-  await supabaseAdmin.from('subscriptions').upsert(
+  await getSupabaseAdmin().from('subscriptions').upsert(
     {
       user_id: session.user.id,
       plan: (plan ?? 'starter') as Plan,

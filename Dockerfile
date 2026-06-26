@@ -16,6 +16,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends libvips-dev \
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# NEXT_PUBLIC_* values are inlined into the browser bundle at build time, so
+# they must be present here. These are PUBLIC (safe to bake in). Pass real
+# values via --build-arg (see DEPLOY.md). Never pass server secrets
+# (SUPABASE_SERVICE_ROLE_KEY, *_SECRET) as build args — those are read at
+# runtime from the container env.
+ARG NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-anon-key
+ARG NEXT_PUBLIC_RAZORPAY_KEY_ID=
+ARG NEXT_PUBLIC_APP_URL=
+ARG NEXT_PUBLIC_POSTHOG_KEY=
+ARG NEXT_PUBLIC_POSTHOG_HOST=
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_RAZORPAY_KEY_ID=$NEXT_PUBLIC_RAZORPAY_KEY_ID \
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY \
+    NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
+
 RUN npm run build
 
 # ─── Stage 3: runner ──────────────────────────────────────────────────

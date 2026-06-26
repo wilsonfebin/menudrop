@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { verifyWebhookSignature } from '@/lib/razorpay'
 
 // Razorpay webhook. MUST read the raw body (not req.json()) so the
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     case 'subscription.activated':
     case 'subscription.charged':
       if (userId) {
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('subscriptions')
           .update({ status: 'active' })
           .eq('user_id', userId)
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     case 'subscription.cancelled':
     case 'subscription.completed':
       if (subId) {
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('subscriptions')
           .update({ status: 'cancelled' })
           .eq('razorpay_sub_id', subId)

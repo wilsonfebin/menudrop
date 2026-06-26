@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { startOfMonth } from 'date-fns'
 import { credsReady } from '@/lib/utils/env'
 import type { Plan } from '@/types'
@@ -18,7 +18,7 @@ export async function checkCanPost(
     return { allowed: true, plan: 'free' }
   }
 
-  const { data: sub } = await supabaseAdmin
+  const { data: sub } = await getSupabaseAdmin()
     .from('subscriptions')
     .select('plan, status')
     .eq('user_id', userId)
@@ -29,7 +29,7 @@ export async function checkCanPost(
     return { allowed: true, plan }
   }
 
-  const { count } = await supabaseAdmin
+  const { count } = await getSupabaseAdmin()
     .from('post_history')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)

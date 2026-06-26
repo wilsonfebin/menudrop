@@ -33,7 +33,8 @@ export default function SettingsPage() {
   const router = useRouter()
   const { profile, fetch: fetchProfile, update } = useProfile()
   const razorpayReady = useRazorpayScript()
-  const [form, setForm] = useState({ name: '', city: '' })
+  const [form, setForm] = useState({ name: '', city: '', display_phone: '' })
+  const [loginPhone, setLoginPhone] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
 
@@ -42,8 +43,22 @@ export default function SettingsPage() {
   }, [profile, fetchProfile])
 
   useEffect(() => {
-    if (profile) setForm({ name: profile.name ?? '', city: profile.city ?? '' })
+    if (profile)
+      setForm({
+        name: profile.name ?? '',
+        city: profile.city ?? '',
+        display_phone: profile.display_phone ?? '',
+      })
   }, [profile])
+
+  // The login phone is the auth identity (immutable account ID), separate from
+  // the editable display phone shown on posts.
+  useEffect(() => {
+    supabase.auth
+      .getUser()
+      .then(({ data }) => setLoginPhone(data.user?.phone ?? null))
+      .catch(() => setLoginPhone(null))
+  }, [])
 
   const initials =
     (profile?.name ?? 'MD')
@@ -121,7 +136,7 @@ export default function SettingsPage() {
         <div className="min-w-0">
           <p className="font-semibold text-ui-text truncate">{profile?.name || 'Your restaurant'}</p>
           <p className="text-xs text-ui-text-ter truncate">
-            {profile?.display_phone || 'Signed in'} · signed in
+            {loginPhone || profile?.display_phone || 'Signed in'}
           </p>
         </div>
       </div>
@@ -144,17 +159,28 @@ export default function SettingsPage() {
             onChange={(e) => setForm({ ...form, city: e.target.value })}
           />
         </Field>
-        <Field label="Mobile number">
+        <Field label="Display phone (shown on your posts)">
           <input
-            className="input bg-ui-bg text-ui-text-sec cursor-not-allowed"
-            value={profile?.display_phone || ''}
-            disabled
-            readOnly
+            className="input"
+            inputMode="tel"
+            placeholder="+91 98765 43210"
+            value={form.display_phone}
+            onChange={(e) => setForm({ ...form, display_phone: e.target.value })}
           />
-          <p className="text-[11px] text-ui-text-ter mt-1">
-            Used to sign in — this is your account ID and can&apos;t be changed.
-          </p>
         </Field>
+        {loginPhone && (
+          <Field label="Login number">
+            <input
+              className="input bg-ui-bg text-ui-text-sec cursor-not-allowed"
+              value={loginPhone}
+              disabled
+              readOnly
+            />
+            <p className="text-[11px] text-ui-text-ter mt-1">
+              The number you signed in with — your account ID. It can&apos;t be changed.
+            </p>
+          </Field>
+        )}
         <button onClick={save} disabled={saving} className="btn-primary w-full">
           {saving ? 'Saving…' : 'Save changes'}
         </button>

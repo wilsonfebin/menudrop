@@ -238,8 +238,11 @@ export default function ConfirmPage() {
         </div>
       )}
 
-      <h2 className="text-sm font-semibold text-ui-text mb-2 mt-5">Size</h2>
-      <div className="grid grid-cols-3 gap-2 mb-1">
+      <div className="flex items-center justify-between mb-1.5 mt-5">
+        <h2 className="text-sm font-semibold text-ui-text">Size</h2>
+        <span className="text-xs text-ui-text-ter">{IMAGE_FORMATS[format].hint}</span>
+      </div>
+      <div className="flex gap-1.5 mb-2">
         {(Object.keys(IMAGE_FORMATS) as ImageFormat[]).map((f) => {
           const fmt = IMAGE_FORMATS[f]
           const active = format === f
@@ -247,21 +250,18 @@ export default function ConfirmPage() {
             <button
               key={f}
               onClick={() => setFormat(f)}
-              className={`rounded-xl border px-2 py-3 text-center ${
+              className={`flex-1 rounded-lg border px-1 py-1.5 text-center text-xs font-medium ${
                 active
                   ? 'bg-brand-blue text-white border-brand-blue'
                   : 'bg-white text-ui-text-sec border-ui-border'
               }`}
             >
-              <span className="block text-xs font-semibold">{fmt.label}</span>
-              <span className={`block text-[11px] ${active ? 'text-white/80' : 'text-ui-text-ter'}`}>
-                {fmt.ratio}
-              </span>
+              {fmt.label}{' '}
+              <span className={active ? 'text-white/70' : 'text-ui-text-ter'}>{fmt.ratio}</span>
             </button>
           )
         })}
       </div>
-      <p className="text-xs text-ui-text-ter mb-2">{IMAGE_FORMATS[format].hint}</p>
 
       {error && <p className="text-sm text-red-600 mb-3 mt-3">{error}</p>}
       <button

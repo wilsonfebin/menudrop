@@ -5,7 +5,7 @@ import type { Database } from '@/types/supabase'
 import type { Dish } from '@/types'
 import { generateCaptions } from '@/lib/ai/generate'
 import { checkCanPost } from '@/lib/gating'
-import { credsReady, isDemoMode } from '@/lib/utils/env'
+import { credsReady } from '@/lib/utils/env'
 import { DEMO_CAPTIONS } from '@/lib/utils/demo'
 
 export const maxDuration = 60
@@ -23,17 +23,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No dishes provided' }, { status: 400 })
   }
 
-  // Demo mode (no OpenAI key): return sample bilingual captions.
-  if (isDemoMode() || !credsReady.openai()) {
+  // No OpenAI key → sample captions (keyless demo). With a key, generate for
+  // real regardless of whether Supabase auth is configured.
+  if (!credsReady.openai()) {
     return NextResponse.json({ captions: DEMO_CAPTIONS, demo: true })
   }
 
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  if (!session && credsReady.supabase()) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Only touch Supabase when it's actually configured.
+  let session = null
+  if (credsReady.supabase()) {
+    const supabase = createRouteHandlerClient<Database>({ cookies })
+    session = (await supabase.auth.getSession()).data.session
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   if (session) {

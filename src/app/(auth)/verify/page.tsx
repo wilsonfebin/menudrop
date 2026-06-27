@@ -1,6 +1,7 @@
 'use client'
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import IndiaFlag from '@/components/ui/IndiaFlag'
 
 function VerifyInner() {
   const router = useRouter()
@@ -35,8 +36,15 @@ function VerifyInner() {
       <div className="text-center mb-10">
         <div className="text-4xl mb-3">✉️</div>
         <h1 className="text-2xl font-bold">Enter your code</h1>
-        <p className="text-brand-blue-lt mt-2">
-          Sent to {phone || 'your phone'}
+        <p className="text-brand-blue-lt mt-2 flex items-center justify-center gap-1.5 flex-wrap">
+          <span>Sent to</span>
+          {phone ? (
+            <span className="inline-flex items-center gap-1.5 font-medium text-white">
+              <IndiaFlag /> +91 {phone}
+            </span>
+          ) : (
+            <span>your phone</span>
+          )}
         </p>
       </div>
 

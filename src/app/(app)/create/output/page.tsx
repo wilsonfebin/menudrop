@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCreate } from '@/store/create'
 import { useProfile } from '@/store/profile'
-import { requestSpecialsBlob, triggerDownload } from '@/lib/utils/download'
+import { requestSpecialsBlob, requestFomoBlob, triggerDownload } from '@/lib/utils/download'
 import { IMAGE_FORMATS } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 
@@ -42,7 +42,8 @@ function BrandIcon({ name, size = 18 }: { name: Platform; size?: number }) {
 
 export default function OutputPage() {
   const router = useRouter()
-  const { dishes, captions, background, format, reset } = useCreate()
+  const { mode, dishes, fomo, captions, background, format, updateFomo, setCaptions, reset } =
+    useCreate()
   const { profile, fetch: fetchProfile } = useProfile()
   const [lang, setLang] = useState<'en' | 'ml'>('en')
   const [copied, setCopied] = useState<string | null>(null)
@@ -52,10 +53,21 @@ export default function OutputPage() {
   const savedRef = useRef(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mapsShort, setMapsShort] = useState<string | null>(null)
 
   useEffect(() => {
     if (!profile) fetchProfile()
   }, [profile, fetchProfile])
+
+  // Shorten the restaurant's maps link once, to append to shared captions.
+  useEffect(() => {
+    const link = profile?.maps_link
+    if (!link) return
+    fetch(`/api/shorten?url=${encodeURIComponent(link)}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { short: link }))
+      .then((d) => setMapsShort(d.short || link))
+      .catch(() => setMapsShort(link))
+  }, [profile?.maps_link])
 
   useEffect(() => {
     if (!captions) router.replace('/create')
@@ -69,18 +81,24 @@ export default function OutputPage() {
       city: profile?.city ?? null,
       display_phone: profile?.display_phone ?? null,
       brand_color: profile?.brand_color ?? null,
+      location_name: profile?.location_name ?? null,
+      business_hours: profile?.business_hours ?? null,
     }),
     [profile]
   )
 
   const reqId = useRef(0)
   const generate = useCallback(async () => {
-    if (!captions || dishes.length === 0) return
+    if (!captions) return
+    if (mode !== 'fomo' && dishes.length === 0) return
     const id = ++reqId.current
     setGenerating(true)
     setError(null)
     try {
-      const blob = await requestSpecialsBlob(dishes, background, profilePayload(), format)
+      const blob =
+        mode === 'fomo' && fomo
+          ? await requestFomoBlob(fomo, background, profilePayload(), format)
+          : await requestSpecialsBlob(dishes, background, profilePayload(), format)
       if (id !== reqId.current) return
       previewBlob.current = blob
       setPreviewUrl((old) => {
@@ -92,7 +110,7 @@ export default function OutputPage() {
     } finally {
       if (id === reqId.current) setGenerating(false)
     }
-  }, [captions, dishes, background, format, profilePayload])
+  }, [captions, mode, dishes, fomo, background, format, profilePayload])
 
   useEffect(() => {
     generate()
@@ -109,11 +127,42 @@ export default function OutputPage() {
 
   const fileName = () => `${(profile?.name || 'menudrop').replace(/\s+/g, '-')}-specials.png`
 
+  // Append the place name + shortened maps link to captions that get
+  // copied/shared.
+  const withLocation = (text: string) => {
+    const parts = [profile?.location_name?.trim(), mapsShort].filter(Boolean)
+    return parts.length ? `${text}\n\n📍 ${parts.join('\n')}` : text
+  }
+
   async function getBlob(): Promise<Blob> {
     if (previewBlob.current) return previewBlob.current
-    const blob = await requestSpecialsBlob(dishes, background, profilePayload(), format)
+    const blob =
+      mode === 'fomo' && fomo
+        ? await requestFomoBlob(fomo, background, profilePayload(), format)
+        : await requestSpecialsBlob(dishes, background, profilePayload(), format)
     previewBlob.current = blob
     return blob
+  }
+
+  // Quick re-post: change the remaining count, re-render the image and refresh
+  // captions so the number stays consistent.
+  async function changeQty(delta: number) {
+    if (!fomo) return
+    const next = Math.max(0, (fomo.qty ?? 0) + delta)
+    const updated = { ...fomo, qty: next }
+    updateFomo({ qty: next }) // re-renders the image via the generate effect
+    savedRef.current = false // allow the updated post to be recorded again
+    try {
+      const res = await fetch('/api/ai/fomo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantName: profile?.name ?? 'Our restaurant', content: updated }),
+      })
+      const data = await res.json()
+      if (res.ok) setCaptions(data.captions)
+    } catch {
+      /* keep existing captions */
+    }
   }
 
   function blobToDataUrl(blob: Blob): Promise<string> {
@@ -135,7 +184,7 @@ export default function OutputPage() {
       await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dishes, captions, background, format, platforms, image_data }),
+        body: JSON.stringify({ kind: mode, dishes, fomo, captions, background, format, platforms, image_data }),
       })
     } catch {
       savedRef.current = false
@@ -143,7 +192,7 @@ export default function OutputPage() {
   }
 
   async function copy(platform: Platform) {
-    await navigator.clipboard.writeText(captions![platform][lang])
+    await navigator.clipboard.writeText(withLocation(captions![platform][lang]))
     setCopied(platform)
     setTimeout(() => setCopied(null), 1500)
   }
@@ -151,7 +200,7 @@ export default function OutputPage() {
   async function shareTo(platform: Platform) {
     setError(null)
     setNote(null)
-    const caption = captions![platform][lang]
+    const caption = withLocation(captions![platform][lang])
     try {
       // Always put the caption on the clipboard (Instagram/Facebook can't be
       // pre-filled, so the user just pastes it).
@@ -201,7 +250,7 @@ export default function OutputPage() {
 
   return (
     <div className="p-5">
-      <TopBar title="Share" to="/create/confirm" />
+      <TopBar title="Share" to={mode === 'fomo' ? '/create' : '/create/confirm'} />
       <h1 className="text-2xl font-bold text-ui-text mb-1">Ready to post</h1>
       <p className="text-ui-text-sec mb-4">Choose a language, then share.</p>
 
@@ -225,6 +274,29 @@ export default function OutputPage() {
           )}
         </div>
       </div>
+
+      {mode === 'fomo' && fomo?.template === 'limited' && (
+        <div className="card p-3 mb-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-ui-text">Stock left — tap to re-post</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => changeQty(-1)}
+              disabled={generating}
+              className="h-8 w-8 rounded-lg border border-ui-border text-lg font-bold text-ui-text active:scale-95 disabled:opacity-50"
+            >
+              −
+            </button>
+            <span className="w-8 text-center font-bold text-ui-text">{fomo.qty ?? 0}</span>
+            <button
+              onClick={() => changeQty(1)}
+              disabled={generating}
+              className="h-8 w-8 rounded-lg border border-ui-border text-lg font-bold text-ui-text active:scale-95 disabled:opacity-50"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-3">
         {(['en', 'ml'] as const).map((l) => (
@@ -294,7 +366,7 @@ export default function OutputPage() {
               </button>
             </div>
             <p className="text-sm text-ui-text-sec whitespace-pre-wrap">
-              {captions[key][lang] || '—'}
+              {withLocation(captions[key][lang]) || '—'}
             </p>
           </div>
         ))}

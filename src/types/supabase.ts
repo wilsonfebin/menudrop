@@ -24,6 +24,8 @@ export interface Database {
           city: string | null
           display_phone: string | null
           maps_link: string | null
+          location_name: string | null
+          business_hours: string | null
           caption_language: 'en' | 'ml' | 'both'
           brand_color: string | null
           created_at: string
@@ -39,7 +41,9 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          kind: string
           dishes: Dish[]
+          fomo: Json | null
           captions: PostCaptions | Record<string, never>
           background: Json | null
           format: string | null
@@ -49,7 +53,9 @@ export interface Database {
         }
         Insert: {
           user_id: string
+          kind?: string
           dishes: Dish[]
+          fomo?: Json | null
           captions: PostCaptions
           background?: Json | null
           format?: string | null

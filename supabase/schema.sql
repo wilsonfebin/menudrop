@@ -18,6 +18,8 @@ create table if not exists public.restaurant_profiles (
   city              text,
   display_phone     text,
   maps_link         text,
+  location_name     text,
+  business_hours    text,
   caption_language  text not null default 'en' check (caption_language in ('en','ml','both')),
   brand_color       text,
   created_at        timestamptz not null default now(),
@@ -29,7 +31,9 @@ create table if not exists public.restaurant_profiles (
 create table if not exists public.post_history (
   id              uuid primary key default uuid_generate_v4(),
   user_id         uuid not null references auth.users(id) on delete cascade,
+  kind            text not null default 'special',
   dishes          jsonb not null default '[]'::jsonb,
+  fomo            jsonb,
   captions        jsonb not null default '{}'::jsonb,
   background      jsonb,
   format          text,

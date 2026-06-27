@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
-import type { BackgroundOption, Dish, ImageFormat, PostCaptions } from '@/types'
+import type { BackgroundOption, Dish, FomoContent, ImageFormat, PostCaptions } from '@/types'
 import { isDemoMode, credsReady } from '@/lib/utils/env'
 import { uploadSpecials } from '@/lib/cloudinary'
 
@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
   }
 
   let body: {
+    kind?: 'special' | 'fomo'
     dishes?: Dish[]
+    fomo?: FomoContent
     captions?: PostCaptions
     background?: BackgroundOption
     format?: ImageFormat
@@ -65,8 +67,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  if (!body.dishes || body.dishes.length === 0 || !body.captions) {
-    return NextResponse.json({ error: 'Missing post content' }, { status: 400 })
+  const kind = body.kind === 'fomo' ? 'fomo' : 'special'
+  if (!body.captions) {
+    return NextResponse.json({ error: 'Missing captions' }, { status: 400 })
+  }
+  if (kind === 'special' && (!body.dishes || body.dishes.length === 0)) {
+    return NextResponse.json({ error: 'Missing dishes' }, { status: 400 })
+  }
+  if (kind === 'fomo' && !body.fomo) {
+    return NextResponse.json({ error: 'Missing update content' }, { status: 400 })
   }
 
   let image_url: string | null = null
@@ -83,7 +92,9 @@ export async function POST(req: NextRequest) {
     .from('post_history')
     .insert({
       user_id: session.user.id,
-      dishes: body.dishes,
+      kind,
+      dishes: body.dishes ?? [],
+      fomo: (body.fomo ?? null) as never,
       captions: body.captions,
       background: (body.background ?? null) as never,
       format: body.format ?? null,

@@ -5,6 +5,7 @@ import type { Dish, PostCaptions } from '@/types'
 // clicked through locally with NO backend and NO API keys.
 export const DEMO_SESSION_COOKIE = 'md_demo'
 export const DEMO_PROFILE_COOKIE = 'md_profile'
+export const DEMO_LOGIN_PHONE_COOKIE = 'md_login_phone'
 
 export const DEMO_DISHES: Dish[] = [
   { name: 'Fish curry', price: '120', corrected: false, original: 'Fish curry', veg: 'nonveg' },
@@ -25,5 +26,20 @@ export const DEMO_CAPTIONS: PostCaptions = {
   facebook: {
     en: "Today's specials are ready! 🍛 Fresh fish curry, chicken biryani, hot parotta & crispy fish fry. Dine in or take away. #Kochi #Foodie",
     ml: "ഇന്നത്തെ സ്പെഷ്യൽ റെഡി! 🍛 ഫിഷ് കറി, ചിക്കൻ ബിരിയാണി, ചൂട് പൊറോട്ട, ഫിഷ് ഫ്രൈ. ഡൈൻ ഇൻ / ടേക്ക് എവേ. #Kochi",
+  },
+}
+
+export const DEMO_FOMO_CAPTIONS: PostCaptions = {
+  instagram: {
+    en: '⚡ FLASH SALE! First 10 guests, 2–4 PM today get a FREE dessert with any main. Run! 🍰 #FlashSale #Kochi #Foodie',
+    ml: '⚡ ഫ്ലാഷ് സെയിൽ! ഇന്ന് 2–4 PM, ആദ്യ 10 പേർക്ക് ഏത് മെയിനിനൊപ്പവും ഫ്രീ ഡെസ്സർട്ട്! വേഗം വരൂ 🍰 #FlashSale',
+  },
+  whatsapp: {
+    en: '⚡ *Flash Sale — today only!*\nFirst 10 guests between 2–4 PM get a FREE dessert with any main course. See you soon! 🏃',
+    ml: '⚡ *ഫ്ലാഷ് സെയിൽ — ഇന്ന് മാത്രം!*\n2–4 PM ന് ഇടയിൽ ആദ്യ 10 പേർക്ക് ഏത് മെയിനിനൊപ്പവും ഫ്രീ ഡെസ്സർട്ട്! 🏃',
+  },
+  facebook: {
+    en: '⚡ Flash sale today! First 10 guests between 2–4 PM get a free dessert with any main. Don’t miss out! #Kochi',
+    ml: '⚡ ഇന്ന് ഫ്ലാഷ് സെയിൽ! 2–4 PM ന് ആദ്യ 10 പേർക്ക് ഫ്രീ ഡെസ്സർട്ട്. മിസ്സാക്കരുത്! #Kochi',
   },
 }

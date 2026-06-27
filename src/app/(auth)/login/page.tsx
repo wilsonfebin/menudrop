@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import IndiaFlag from '@/components/ui/IndiaFlag'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -9,15 +10,21 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
 
+  const valid = phone.length === 10
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!valid) {
+      setError('Enter a 10-digit mobile number')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: `91${phone}` }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Could not send code')
@@ -44,18 +51,24 @@ export default function LoginPage() {
         <label className="block text-sm font-medium text-brand-blue-lt">
           WhatsApp number
         </label>
-        <input
-          type="tel"
-          inputMode="tel"
-          placeholder="98765 43210"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="input text-ui-text"
-          required
-        />
+        <div className="flex">
+          <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-ui-border bg-white">
+            <IndiaFlag />
+          </span>
+          <input
+            type="tel"
+            inputMode="numeric"
+            placeholder="98765 43210"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            className="input text-ui-text rounded-l-none flex-1"
+            maxLength={10}
+            required
+          />
+        </div>
         {note && <p className="text-xs text-brand-blue-lt">{note}</p>}
         {error && <p className="text-sm text-amber-200">{error}</p>}
-        <button type="submit" disabled={loading} className="btn-primary w-full">
+        <button type="submit" disabled={loading || !valid} className="btn-primary w-full">
           {loading ? 'Sending…' : 'Send OTP'}
         </button>
       </form>

@@ -35,7 +35,7 @@ export default function ConfirmPage() {
   }, [profile, fetchProfile])
 
   useEffect(() => {
-    fetch('/api/config')
+    fetch('/api/config', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : { pexels: false }))
       .then((d) => setPexelsReady(!!(d.photo ?? d.pexels)))
       .catch(() => setPexelsReady(false))
@@ -62,8 +62,8 @@ export default function ConfirmPage() {
     }
   }
 
-  function cycleVeg(i: number, current: 'veg' | 'nonveg' | null | undefined) {
-    const order: ('veg' | 'nonveg' | null)[] = [null, 'veg', 'nonveg']
+  function cycleVeg(i: number, current: 'veg' | 'nonveg' | 'vegan' | null | undefined) {
+    const order: ('veg' | 'nonveg' | 'vegan' | null)[] = [null, 'veg', 'nonveg', 'vegan']
     const next = order[(order.indexOf(current ?? null) + 1) % order.length]
     updateDish(i, { veg: next })
   }
@@ -81,9 +81,9 @@ export default function ConfirmPage() {
   }
 
   const options: { kind: BgKind; label: string; hint: string }[] = [
-    { kind: 'photo', label: '🖼 Your photo', hint: 'Use a photo as the backdrop' },
-    { kind: 'dish_photo', label: '🍽 Food image', hint: 'Auto picture by dish name' },
-    { kind: 'brand_color', label: '🎨 Brand', hint: 'Your brand colour' },
+    { kind: 'photo', label: 'Your photo', hint: 'Use a photo as the backdrop' },
+    { kind: 'dish_photo', label: 'Food image', hint: 'Auto picture by dish name' },
+    { kind: 'brand_color', label: 'Brand', hint: 'Your brand colour' },
   ]
 
   async function generate() {
@@ -115,7 +115,7 @@ export default function ConfirmPage() {
     <div className="p-5">
       <TopBar title="Review" to="/create" />
       <h1 className="text-2xl font-bold text-ui-text mb-1">Check the dishes</h1>
-      <p className="text-ui-text-sec mb-4">Fix anything we misread. Tap the square to mark veg / non-veg.</p>
+      <p className="text-ui-text-sec mb-4">Fix anything we misread. Tap the square to set veg / non-veg / vegan.</p>
 
       <div className="space-y-2 mb-5">
         {dishes.map((d, i) => (
@@ -123,21 +123,27 @@ export default function ConfirmPage() {
             <button
               type="button"
               onClick={() => cycleVeg(i, d.veg)}
-              aria-label="Toggle veg / non-veg"
+              aria-label="Toggle veg / non-veg / vegan"
               className="h-9 w-9 shrink-0 rounded-md border-2 flex items-center justify-center"
               style={{
                 borderColor:
-                  d.veg === 'veg' ? '#1B7A3D' : d.veg === 'nonveg' ? '#B00020' : '#D8D6CF',
+                  d.veg === 'nonveg' ? '#B00020' : d.veg ? '#1B7A3D' : '#D8D6CF',
               }}
             >
-              {d.veg ? (
-                <span
-                  className="h-3 w-3 rounded-full"
-                  style={{ background: d.veg === 'veg' ? '#1B7A3D' : '#B00020' }}
-                />
-              ) : (
-                <span className="text-ui-text-ter text-xs">–</span>
+              {d.veg === 'veg' && (
+                <span className="h-3 w-3 rounded-full" style={{ background: '#1B7A3D' }} />
               )}
+              {d.veg === 'nonveg' && (
+                <svg width="14" height="13" viewBox="0 0 14 13" aria-hidden="true">
+                  <polygon points="7,1 13,12 1,12" fill="#B00020" />
+                </svg>
+              )}
+              {d.veg === 'vegan' && (
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <ellipse cx="8" cy="8" rx="3.5" ry="6" transform="rotate(45 8 8)" fill="#1B7A3D" />
+                </svg>
+              )}
+              {!d.veg && <span className="text-ui-text-ter text-xs">–</span>}
             </button>
             <input
               className="input flex-1 py-2 min-w-0"
@@ -173,14 +179,14 @@ export default function ConfirmPage() {
       </button>
 
       <h2 className="text-sm font-semibold text-ui-text mb-2">Background</h2>
-      <div className="grid grid-cols-3 gap-2 mb-2">
+      <div className="grid grid-cols-3 gap-1.5 mb-2">
         {options.map((o) => {
           const active = background.type === o.kind
           return (
             <button
               key={o.kind}
               onClick={() => selectBg(o.kind)}
-              className={`relative rounded-xl border px-2 py-3 text-xs font-medium text-center ${
+              className={`relative min-w-0 rounded-lg border px-1 py-2 text-xs font-medium text-center truncate ${
                 active
                   ? 'bg-brand-blue text-white border-brand-blue'
                   : 'bg-white text-ui-text-sec border-ui-border'
@@ -188,7 +194,7 @@ export default function ConfirmPage() {
             >
               {o.kind === 'dish_photo' && pexelsReady !== null && (
                 <span
-                  className={`absolute top-1.5 right-1.5 h-2 w-2 rounded-full ${
+                  className={`absolute top-1 right-1 h-2 w-2 rounded-full ${
                     pexelsReady ? 'bg-green-500' : 'bg-amber-400'
                   }`}
                   aria-hidden
@@ -242,7 +248,7 @@ export default function ConfirmPage() {
         <h2 className="text-sm font-semibold text-ui-text">Size</h2>
         <span className="text-xs text-ui-text-ter">{IMAGE_FORMATS[format].hint}</span>
       </div>
-      <div className="flex gap-1.5 mb-2">
+      <div className="grid grid-cols-3 gap-1.5 mb-2">
         {(Object.keys(IMAGE_FORMATS) as ImageFormat[]).map((f) => {
           const fmt = IMAGE_FORMATS[f]
           const active = format === f
@@ -250,7 +256,7 @@ export default function ConfirmPage() {
             <button
               key={f}
               onClick={() => setFormat(f)}
-              className={`flex-1 rounded-lg border px-1 py-1.5 text-center text-xs font-medium ${
+              className={`min-w-0 rounded-lg border px-1 py-2 text-center text-xs font-medium truncate ${
                 active
                   ? 'bg-brand-blue text-white border-brand-blue'
                   : 'bg-white text-ui-text-sec border-ui-border'

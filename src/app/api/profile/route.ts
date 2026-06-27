@@ -63,6 +63,8 @@ export async function POST(req: NextRequest) {
       logo_public_id: null,
       street: null,
       maps_link: null,
+      location_name: null,
+      business_hours: null,
       caption_language: 'both',
       brand_color: '#185FA5',
       city: null,

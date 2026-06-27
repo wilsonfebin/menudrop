@@ -10,7 +10,7 @@ import Spinner from '@/components/ui/Spinner'
 export default function DashboardPage() {
   const router = useRouter()
   const { profile, fetch: fetchProfile, setLogo } = useProfile()
-  const { setDishes, setCaptions, setBackground, setFormat } = useCreate()
+  const { setMode, setDishes, setFomo, setCaptions, setBackground, setFormat } = useCreate()
   const [posts, setPosts] = useState<PostHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [logoBusy, setLogoBusy] = useState(false)
@@ -53,7 +53,9 @@ export default function DashboardPage() {
   }
 
   function reuse(post: PostHistory) {
+    setMode(post.kind === 'fomo' ? 'fomo' : 'special')
     setDishes(post.dishes ?? [])
+    setFomo(post.fomo ?? null)
     if (post.captions) setCaptions(post.captions)
     setBackground((post.background as BackgroundOption) ?? { type: 'dish_photo' })
     setFormat((post.format as ImageFormat) ?? 'portrait')
@@ -145,9 +147,16 @@ export default function DashboardPage() {
                     }}
                   >
                     <span className="text-xs font-semibold leading-tight line-clamp-2">
-                      {(p.dishes ?? []).slice(0, 2).map((d) => d.name).join(', ')}
+                      {p.kind === 'fomo'
+                        ? p.fomo?.headline || p.fomo?.badge || 'Update'
+                        : (p.dishes ?? []).slice(0, 2).map((d) => d.name).join(', ')}
                     </span>
                   </div>
+                )}
+                {p.kind === 'fomo' && (
+                  <span className="absolute top-1.5 left-1.5 bg-[#E23B3B] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                    {p.fomo?.badge || 'FOMO'}
+                  </span>
                 )}
                 <span className="absolute top-1.5 right-1.5 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-md">
                   Reuse
@@ -155,7 +164,9 @@ export default function DashboardPage() {
               </div>
               <div className="px-2.5 py-2">
                 <p className="text-xs font-medium text-ui-text truncate">
-                  {(p.dishes ?? []).length} dishes
+                  {p.kind === 'fomo'
+                    ? p.fomo?.headline || 'FOMO update'
+                    : `${(p.dishes ?? []).length} dishes`}
                 </p>
                 <p className="text-[11px] text-ui-text-ter">
                   {new Date(p.created_at).toLocaleDateString()}

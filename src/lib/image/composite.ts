@@ -1,8 +1,9 @@
 import sharp from 'sharp'
 import { buildTextLayer } from '@/lib/image/text-layer'
+import { buildFomoLayer } from '@/lib/image/fomo-layer'
 import { fetchDishPhoto } from '@/lib/image/stock'
 import { IMAGE_FORMATS } from '@/types'
-import type { BackgroundOption, Dish, ImageFormat, RestaurantProfile } from '@/types'
+import type { BackgroundOption, Dish, FomoContent, ImageFormat, RestaurantProfile } from '@/types'
 
 interface RGB {
   r: number
@@ -119,7 +120,7 @@ export async function composeSpecialsImage(
   background: BackgroundOption,
   profile: Pick<
     RestaurantProfile,
-    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color'
+    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color' | 'location_name' | 'business_hours'
   >,
   format: ImageFormat = 'portrait'
 ): Promise<{ png: Buffer; source: string }> {
@@ -129,6 +130,47 @@ export async function composeSpecialsImage(
   const monogram = logo ? null : initials(profile.name)
   const overlay = buildTextLayer({
     dishes,
+    profile,
+    width: w,
+    height: h,
+    reserveLogo: !!logo || !!monogram,
+    monogram,
+  })
+
+  const layers: sharp.OverlayOptions[] = [{ input: overlay, top: 0, left: 0 }]
+  if (logo) layers.push(logo)
+
+  const png = await sharp(base).composite(layers).png({ quality: 92 }).toBuffer()
+  return { png, source }
+}
+
+/**
+ * Stateless FOMO poster: content + background + profile + format -> PNG.
+ * Headline-first layout (urgency badge + headline + detail + timing).
+ */
+export async function composeFomoImage(
+  content: FomoContent,
+  background: BackgroundOption,
+  profile: Pick<
+    RestaurantProfile,
+    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'location_name' | 'business_hours'
+  >,
+  format: ImageFormat = 'portrait'
+): Promise<{ png: Buffer; source: string }> {
+  const { w, h } = IMAGE_FORMATS[format] ?? IMAGE_FORMATS.portrait
+  const queryDish: Dish[] = [
+    {
+      name: content.item || content.headline || 'restaurant food',
+      price: null,
+      corrected: false,
+      original: null,
+    },
+  ]
+  const { buffer: base, source } = await buildBackground(background, queryDish, w, h)
+  const logo = await buildLogoBadge(profile.logo_url ?? null, w)
+  const monogram = logo ? null : initials(profile.name)
+  const overlay = buildFomoLayer({
+    content,
     profile,
     width: w,
     height: h,

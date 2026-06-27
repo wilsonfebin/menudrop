@@ -8,6 +8,8 @@ export interface RestaurantProfile {
   city: string | null
   display_phone: string | null
   maps_link: string | null
+  location_name: string | null
+  business_hours: string | null
   caption_language: 'en' | 'ml' | 'both'
   brand_color: string | null
   created_at: string
@@ -19,7 +21,7 @@ export interface Dish {
   price: string | null
   corrected: boolean
   original: string | null
-  veg?: 'veg' | 'nonveg' | null
+  veg?: 'veg' | 'nonveg' | 'vegan' | null
 }
 
 export interface PostCaptions {
@@ -28,10 +30,41 @@ export interface PostCaptions {
   facebook: { en: string; ml: string }
 }
 
+// ── FOMO updates (urgent, time-sensitive posts) ───────────────────────
+export type FomoTemplate = 'happy_hour' | 'flash_sale' | 'limited' | 'holiday' | 'custom'
+
+export interface FomoContent {
+  template: FomoTemplate
+  badge: string // urgency pill, e.g. "FLASH SALE"
+  headline: string // big main line
+  detail: string // offer / condition sub-line
+  timing: string // time window or date
+  item: string // hero item (limited stock)
+  qty: number | null // remaining count (limited stock)
+}
+
+export const FOMO_BADGES: Record<FomoTemplate, string> = {
+  happy_hour: 'HAPPY HOUR',
+  flash_sale: 'FLASH SALE',
+  limited: 'LIMITED',
+  holiday: 'OPEN TODAY',
+  custom: 'TODAY ONLY',
+}
+
+export const FOMO_LABELS: Record<FomoTemplate, string> = {
+  happy_hour: 'Happy Hour',
+  flash_sale: 'Flash Sale',
+  limited: 'Limited stock',
+  holiday: 'Holiday hours',
+  custom: 'Custom',
+}
+
 export interface PostHistory {
   id: string
   user_id: string
+  kind: 'special' | 'fomo'
   dishes: Dish[]
+  fomo: FomoContent | null
   captions: PostCaptions
   background: BackgroundOption | null
   format: ImageFormat | null
@@ -51,7 +84,7 @@ export interface GenerateImageRequest {
   background: BackgroundOption
   profile: Pick<
     RestaurantProfile,
-    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color'
+    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color' | 'location_name' | 'business_hours'
   >
 }
 

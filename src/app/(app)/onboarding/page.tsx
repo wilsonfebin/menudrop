@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopBar from '@/components/layout/TopBar'
+import IndiaFlag from '@/components/ui/IndiaFlag'
+import LocationField from '@/components/ui/LocationField'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -9,6 +11,8 @@ export default function OnboardingPage() {
     name: '',
     city: '',
     display_phone: '',
+    maps_link: '',
+    location_name: '',
     caption_language: 'both' as 'en' | 'ml' | 'both',
   })
   const [logo, setLogo] = useState<string | null>(null)
@@ -26,6 +30,10 @@ export default function OnboardingPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (form.display_phone && form.display_phone.length !== 10) {
+      setError('Enter a 10-digit mobile number')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/profile', {
@@ -101,12 +109,32 @@ export default function OnboardingPage() {
 
         <div>
           <label className="block text-sm font-medium text-ui-text mb-1">Display phone</label>
-          <input
-            className="input"
-            value={form.display_phone}
-            onChange={(e) => setForm({ ...form, display_phone: e.target.value })}
-            placeholder="+91 98765 43210"
+          <div className="flex">
+            <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-ui-border bg-white">
+              <IndiaFlag />
+            </span>
+            <input
+              className="input rounded-l-none flex-1 min-w-0"
+              inputMode="numeric"
+              maxLength={10}
+              value={form.display_phone}
+              onChange={(e) =>
+                setForm({ ...form, display_phone: e.target.value.replace(/\D/g, '').slice(0, 10) })
+              }
+              placeholder="98765 43210"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-ui-text mb-1">Location</label>
+          <LocationField
+            value={{ link: form.maps_link, name: form.location_name }}
+            onChange={(v) => setForm({ ...form, maps_link: v.link, location_name: v.name })}
           />
+          <p className="text-[11px] text-ui-text-ter mt-1.5">
+            Captured from your device GPS — stand at your restaurant. Optional.
+          </p>
         </div>
 
         <div>

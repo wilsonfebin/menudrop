@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useProfile } from '@/store/profile'
 import { supabase } from '@/lib/supabase/client'
 import { useRazorpayScript } from '@/hooks/useRazorpay'
+import IndiaFlag from '@/components/ui/IndiaFlag'
+import LocationField from '@/components/ui/LocationField'
 import type { Plan } from '@/types'
 
 const PLANS: { key: Exclude<Plan, 'free'>; label: string; price: number; perk: string }[] = [
@@ -33,10 +35,18 @@ export default function SettingsPage() {
   const router = useRouter()
   const { profile, fetch: fetchProfile, update } = useProfile()
   const razorpayReady = useRazorpayScript()
-  const [form, setForm] = useState({ name: '', city: '', display_phone: '' })
+  const [form, setForm] = useState({
+    name: '',
+    city: '',
+    display_phone: '',
+    maps_link: '',
+    location_name: '',
+    business_hours: '',
+  })
   const [loginPhone, setLoginPhone] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
     if (!profile) fetchProfile()
@@ -47,18 +57,24 @@ export default function SettingsPage() {
       setForm({
         name: profile.name ?? '',
         city: profile.city ?? '',
-        display_phone: profile.display_phone ?? '',
+        // Normalise any previously-stored format to the last 10 digits.
+        display_phone: (profile.display_phone ?? '').replace(/\D/g, '').slice(-10),
+        maps_link: profile.maps_link ?? '',
+        location_name: profile.location_name ?? '',
+        business_hours: profile.business_hours ?? '',
       })
   }, [profile])
 
   // The login phone is the auth identity (immutable account ID), separate from
   // the editable display phone shown on posts.
   useEffect(() => {
-    supabase.auth
-      .getUser()
-      .then(({ data }) => setLoginPhone(data.user?.phone ?? null))
+    fetch('/api/me')
+      .then((r) => (r.ok ? r.json() : { login_phone: null }))
+      .then((d) => setLoginPhone(d.login_phone ?? null))
       .catch(() => setLoginPhone(null))
   }, [])
+
+  const fmtLogin = loginPhone ? `+91 ${loginPhone.replace(/\D/g, '').slice(-10)}` : null
 
   const initials =
     (profile?.name ?? 'MD')
@@ -71,8 +87,13 @@ export default function SettingsPage() {
       .toUpperCase() || 'MD'
 
   async function save() {
-    setSaving(true)
     setMsg(null)
+    if (form.display_phone && form.display_phone.length !== 10) {
+      setErr('Enter a 10-digit mobile number')
+      return
+    }
+    setErr(null)
+    setSaving(true)
     await update(form)
     setMsg('Saved')
     setSaving(false)
@@ -136,7 +157,7 @@ export default function SettingsPage() {
         <div className="min-w-0">
           <p className="font-semibold text-ui-text truncate">{profile?.name || 'Your restaurant'}</p>
           <p className="text-xs text-ui-text-ter truncate">
-            {loginPhone || profile?.display_phone || 'Signed in'}
+            {fmtLogin || 'Signed in'}
           </p>
         </div>
       </div>
@@ -159,20 +180,45 @@ export default function SettingsPage() {
             onChange={(e) => setForm({ ...form, city: e.target.value })}
           />
         </Field>
+        <Field label="Location">
+          <LocationField
+            value={{ link: form.maps_link, name: form.location_name }}
+            onChange={(v) => setForm({ ...form, maps_link: v.link, location_name: v.name })}
+          />
+          <p className="text-[11px] text-ui-text-ter mt-1.5">
+            Captured from your device GPS. Added as a short clickable link to your shared captions.
+          </p>
+        </Field>
         <Field label="Display phone (shown on your posts)">
+          <div className="flex">
+            <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-ui-border bg-white">
+              <IndiaFlag />
+            </span>
+            <input
+              className="input rounded-l-none flex-1 min-w-0"
+              inputMode="numeric"
+              placeholder="98765 43210"
+              maxLength={10}
+              value={form.display_phone}
+              onChange={(e) =>
+                setForm({ ...form, display_phone: e.target.value.replace(/\D/g, '').slice(0, 10) })
+              }
+            />
+          </div>
+        </Field>
+        <Field label="Business hours (shown on the image)">
           <input
             className="input"
-            inputMode="tel"
-            placeholder="+91 98765 43210"
-            value={form.display_phone}
-            onChange={(e) => setForm({ ...form, display_phone: e.target.value })}
+            placeholder="e.g. 11:00 AM – 11:00 PM"
+            value={form.business_hours}
+            onChange={(e) => setForm({ ...form, business_hours: e.target.value })}
           />
         </Field>
-        {loginPhone && (
+        {fmtLogin && (
           <Field label="Login number">
             <input
               className="input bg-ui-bg text-ui-text-sec cursor-not-allowed"
-              value={loginPhone}
+              value={fmtLogin}
               disabled
               readOnly
             />
@@ -184,6 +230,7 @@ export default function SettingsPage() {
         <button onClick={save} disabled={saving} className="btn-primary w-full">
           {saving ? 'Saving…' : 'Save changes'}
         </button>
+        {err && <p className="text-sm text-red-600 text-center">{err}</p>}
         {msg && <p className="text-sm text-brand-teal text-center">{msg}</p>}
       </div>
 
@@ -217,7 +264,7 @@ export default function SettingsPage() {
           </span>
           <span className="text-ui-text-ter">›</span>
         </Link>
-        <button onClick={signOut} className="card p-3 w-full text-left font-medium text-red-600">
+        <button onClick={signOut} className="card p-3 w-full text-center font-medium text-red-600">
           Sign out
         </button>
       </div>

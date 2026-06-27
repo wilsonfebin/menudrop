@@ -1,8 +1,8 @@
-import type { BackgroundOption, Dish, ImageFormat, RestaurantProfile } from '@/types'
+import type { BackgroundOption, Dish, FomoContent, ImageFormat, RestaurantProfile } from '@/types'
 
 type ProfilePayload = Pick<
   RestaurantProfile,
-  'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color'
+  'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color' | 'location_name' | 'business_hours'
 >
 
 // POST to the image API and return the rendered PNG as a Blob.
@@ -15,7 +15,23 @@ export async function requestSpecialsBlob(
   const res = await fetch('/api/image/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dishes, background, profile, format }),
+    body: JSON.stringify({ type: 'special', dishes, background, profile, format }),
+  })
+  if (!res.ok) throw new Error('Image generation failed')
+  return res.blob()
+}
+
+// POST a FOMO update and return the rendered PNG as a Blob.
+export async function requestFomoBlob(
+  fomo: FomoContent,
+  background: BackgroundOption,
+  profile: ProfilePayload,
+  format: ImageFormat = 'portrait'
+): Promise<Blob> {
+  const res = await fetch('/api/image/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'fomo', fomo, background, profile, format }),
   })
   if (!res.ok) throw new Error('Image generation failed')
   return res.blob()

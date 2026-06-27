@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
 import { isDemoMode } from '@/lib/utils/env'
 import { normalisePhone } from '@/lib/auth/otp'
-import { DEMO_SESSION_COOKIE } from '@/lib/utils/demo'
+import { DEMO_SESSION_COOKIE, DEMO_LOGIN_PHONE_COOKIE } from '@/lib/utils/demo'
 
 export async function POST(req: NextRequest) {
   let body: { phone?: string; code?: string }
@@ -28,12 +28,16 @@ export async function POST(req: NextRequest) {
         demo: true,
         needsOnboarding: true,
       })
-      res.cookies.set(DEMO_SESSION_COOKIE, '1', {
+      const cookieOpts = {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         maxAge: 60 * 60 * 24, // 1 day
-      })
+      }
+      res.cookies.set(DEMO_SESSION_COOKIE, '1', cookieOpts)
+      // Persist the login number so it stays fixed (separate from the editable
+      // display phone).
+      res.cookies.set(DEMO_LOGIN_PHONE_COOKIE, phone.slice(-10), cookieOpts)
       return res
     }
     return NextResponse.json({ error: 'Demo mode: use code 000000' }, { status: 401 })

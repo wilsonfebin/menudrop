@@ -15,7 +15,10 @@ function truncate(s: string, max = 24): string {
 
 interface BuildOpts {
   dishes: Dish[]
-  profile: Pick<RestaurantProfile, 'name' | 'street' | 'city' | 'display_phone'>
+  profile: Pick<
+    RestaurantProfile,
+    'name' | 'street' | 'city' | 'display_phone' | 'location_name' | 'business_hours'
+  >
   width?: number
   height?: number
   textColor?: string
@@ -61,51 +64,83 @@ export function buildTextLayer({
   const eyebrow = shadow(148, 176, 36, 700, 'start', 'letter-spacing="6"', 'TODAY&#8217;S SPECIALS', accentColor)
   const nameEl = shadow(62, 258, nameSize, 800, 'start', `clip-path="url(#nameClip)" letter-spacing="0.5"`, escapeXml(profile.name), textColor)
 
-  // menu strip (bottom anchored)
-  const footerH = 120
+  // ── footer lines (place / hours / phone), bottom-anchored ───────────
+  const placeRaw =
+    profile.location_name && profile.location_name.trim()
+      ? profile.location_name.trim()
+      : [profile.street, profile.city].filter(Boolean).join(', ')
+  const placeLine = escapeXml(placeRaw)
+  const hoursLine = escapeXml((profile.business_hours ?? '').trim())
+  const phoneLine = escapeXml(profile.display_phone ?? '')
+
+  type FooterLine = { text: string; size: number; weight: number; op: number }
+  const footerLines: FooterLine[] = []
+  if (placeLine) footerLines.push({ text: placeLine, size: 28, weight: 400, op: 0.82 })
+  if (hoursLine) footerLines.push({ text: hoursLine, size: 27, weight: 400, op: 0.82 })
+  if (phoneLine) footerLines.push({ text: phoneLine, size: 32, weight: 600, op: 1 })
+  const lineH = 44
+  const footerH = footerLines.length ? footerLines.length * lineH + 50 : 60
+
+  // menu strip (bottom anchored). footerH reserves room for the footer lines
+  // so they never crowd the last dish row.
   const listBottom = H - footerH
   const rowH = Math.min(78, Math.max(48, 320 / n))
   const blockH = rowH * n
   const listTop = listBottom - blockH
   const firstY = listTop + rowH * 0.7
-  const priceX = W - 70
+  // Inset the menu block so the name/price columns sit closer together.
+  const menuLeft = 150
+  const priceX = W - 150
   const scrimStart = Math.max(300, listTop - 150)
 
+  // FSSAI-style marks: veg = green circle, non-veg = red triangle,
+  // vegan = green leaf — each inside a coloured square.
   const vegMark = (x: number, cy: number, veg?: Dish['veg']) => {
     if (!veg) return ''
-    const col = veg === 'veg' ? '#3FB661' : '#FF6A5A'
     const s = 28
-    return `
-      <rect x="${x}" y="${cy - s / 2}" width="${s}" height="${s}" rx="4"
-            fill="none" stroke="${col}" stroke-width="3"/>
-      <circle cx="${x + s / 2}" cy="${cy}" r="6.5" fill="${col}"/>`
+    const cxm = x + s / 2
+    const col = veg === 'nonveg' ? '#FF6A5A' : '#3FB661'
+    const box = `<rect x="${x}" y="${cy - s / 2}" width="${s}" height="${s}" rx="4" fill="none" stroke="${col}" stroke-width="3"/>`
+    let inner = ''
+    if (veg === 'veg') {
+      inner = `<circle cx="${cxm}" cy="${cy}" r="6.5" fill="${col}"/>`
+    } else if (veg === 'nonveg') {
+      const t = 7
+      inner = `<polygon points="${cxm},${cy - t} ${cxm - t},${cy + t * 0.85} ${cxm + t},${cy + t * 0.85}" fill="${col}"/>`
+    } else {
+      inner = `<ellipse cx="${cxm}" cy="${cy}" rx="4.5" ry="8" transform="rotate(45 ${cxm} ${cy})" fill="${col}"/>`
+    }
+    return box + inner
   }
 
   const rows = top
     .map((d, i) => {
       const y = firstY + i * rowH
       const hasVeg = !!d.veg
-      const nameX = hasVeg ? 122 : 70
+      const nameX = hasVeg ? menuLeft + 52 : menuLeft
       const name = escapeXml(truncate(d.name || '—'))
       const price = d.price ? `&#8377;${escapeXml(d.price)}` : ''
       return `
-        ${vegMark(70, y - 13, d.veg)}
+        ${vegMark(menuLeft, y - 13, d.veg)}
         <line x1="${nameX}" y1="${y + 12}" x2="${priceX}" y2="${y + 12}"
-              stroke="${textColor}" stroke-opacity="0.20" stroke-width="2"
-              stroke-dasharray="2 10" stroke-linecap="round"/>
+              stroke="${textColor}" stroke-opacity="0.28" stroke-width="2"
+              stroke-dasharray="1 7" stroke-linecap="round"/>
         <text x="${nameX}" y="${y}" font-size="42" font-weight="600" fill="${textColor}"
-              font-family="Georgia, 'Times New Roman', serif">${name}</text>
+              font-family="Helvetica, Arial, sans-serif">${name}</text>
         <text x="${priceX}" y="${y}" font-size="42" font-weight="700" fill="${accentColor}"
-              text-anchor="end" font-family="Georgia, 'Times New Roman', serif">${price}</text>`
+              text-anchor="end" font-family="Helvetica, Arial, sans-serif">${price}</text>`
     })
     .join('')
 
-  const addressLine = escapeXml([profile.street, profile.city].filter(Boolean).join(', '))
-  const phoneLine = escapeXml(profile.display_phone ?? '')
+  // Render footer lines stacked, anchored to the bottom.
   const cx = W / 2
-  const footer = `
-    ${addressLine ? `<text x="${cx}" y="${H - 74}" text-anchor="middle" font-size="30" fill="${textColor}" fill-opacity="0.82" letter-spacing="1" font-family="Helvetica, Arial, sans-serif">${addressLine}</text>` : ''}
-    ${phoneLine ? `<text x="${cx}" y="${H - 34}" text-anchor="middle" font-size="32" font-weight="600" fill="${textColor}" letter-spacing="1" font-family="Helvetica, Arial, sans-serif">${phoneLine}</text>` : ''}`
+  const footerStartY = H - 46 - (footerLines.length - 1) * lineH
+  const footer = footerLines
+    .map(
+      (ln, i) =>
+        `<text x="${cx}" y="${footerStartY + i * lineH}" text-anchor="middle" font-size="${ln.size}" font-weight="${ln.weight}" fill="${textColor}" fill-opacity="${ln.op}" letter-spacing="${ln.size >= 32 ? 1 : 0.5}" font-family="Helvetica, Arial, sans-serif">${ln.text}</text>`
+    )
+    .join('')
 
   const badgeFull = 170
   const badgeR = badgeFull / 2

@@ -52,6 +52,8 @@ function gradientPng(base: RGB, w: number, h: number): Promise<Buffer> {
 
 function processPhoto(buf: Buffer, w: number, h: number): Promise<Buffer> {
   return sharp(buf)
+    // Honor EXIF orientation so portrait phone photos aren't rotated sideways.
+    .rotate()
     .resize(w, h, { fit: 'cover', position: sharp.strategy.attention })
     .blur(2)
     .modulate({ brightness: 0.92, saturation: 1.16 })
@@ -96,7 +98,7 @@ async function buildLogoBadge(
     const innerMask = Buffer.from(`<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="#fff"/></svg>`)
     const backing = await sharp({ create: { width: full, height: full, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 0.95 } } })
       .composite([{ input: ringMask, blend: 'dest-in' }]).png().toBuffer()
-    const logoCircle = await sharp(src).resize(size, size, { fit: 'cover', position: 'centre' })
+    const logoCircle = await sharp(src).rotate().resize(size, size, { fit: 'cover', position: 'centre' })
       .composite([{ input: innerMask, blend: 'dest-in' }]).png().toBuffer()
     const badge = await sharp(backing).composite([{ input: logoCircle, top: ring, left: ring }]).png().toBuffer()
     return { input: badge, top: 54, left: w - full - 54 }

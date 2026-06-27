@@ -27,6 +27,13 @@ Instagram: punchy, hashtag-friendly (3-5 hashtags).
 WhatsApp: friendly broadcast style, include prices.
 Facebook: friendly community post for a business page, a couple of emojis, 1-2 hashtags.
 
+MALAYALAM QUALITY (critical): Write the "ml" captions as fluent, natural,
+grammatically correct Malayalam in Malayalam script, exactly as a native Kerala
+speaker would write them. Use correct Malayalam grammar, word order and natural
+phrasing — do NOT do a literal, word-by-word translation of the English, and do
+not produce stiff or machine-translated text. Dish names well known in English
+(e.g. biryani, sambar) may stay in their common form. Keep prices as "₹50".
+
 Return ONLY valid JSON with this exact shape:
 {
   "instagram": { "en": string, "ml": string },
@@ -54,6 +61,11 @@ Tone: urgent, exciting, playful — create fear of missing out. Use 1-2 relevant
 Instagram: punchy, 3-5 hashtags.
 WhatsApp: friendly broadcast style with the key detail + CTA.
 Facebook: community post for a business page, a couple of emojis, 1-2 hashtags.
+
+MALAYALAM QUALITY (critical): Write the "ml" captions as fluent, natural,
+grammatically correct Malayalam in Malayalam script, exactly as a native Kerala
+speaker would write them — correct grammar, word order and natural phrasing, NOT
+a literal word-by-word translation of the English.
 
 Return ONLY valid JSON with this exact shape:
 {

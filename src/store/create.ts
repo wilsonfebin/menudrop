@@ -96,8 +96,21 @@ export const useCreate = create<CreateStore>()(
     }),
     {
       name: 'menudrop-create',
-      storage: createJSONStorage(() => sessionStorage),
-      // photoData (a large base64 string) is intentionally excluded.
+      // Guard sessionStorage writes — never let a quota error reach the user.
+      storage: createJSONStorage(() => ({
+        getItem: (k) => sessionStorage.getItem(k),
+        setItem: (k, v) => {
+          try {
+            sessionStorage.setItem(k, v)
+          } catch {
+            /* over quota — skip persistence for this write */
+          }
+        },
+        removeItem: (k) => sessionStorage.removeItem(k),
+      })),
+      // Large base64 blobs (photoData, and a photo background's image_data) are
+      // intentionally excluded — sessionStorage has a ~5MB quota and would throw
+      // QuotaExceededError. Photo backgrounds stay in memory for the session.
       partialize: (state) => ({
         mode: state.mode,
         inputType: state.inputType,
@@ -105,7 +118,10 @@ export const useCreate = create<CreateStore>()(
         dishes: state.dishes,
         fomo: state.fomo,
         captions: state.captions,
-        background: state.background,
+        background:
+          state.background.type === 'photo'
+            ? ({ type: 'plain' } as BackgroundOption)
+            : state.background,
         format: state.format,
       }),
     }

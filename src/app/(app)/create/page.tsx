@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCreate } from '@/store/create'
 import TopBar from '@/components/layout/TopBar'
 import FomoForm from './FomoForm'
+import { downscaleImage } from '@/lib/utils/image'
 
 export default function CreatePage() {
   const router = useRouter()
@@ -25,7 +26,7 @@ export default function CreatePage() {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setPhoto(reader.result as string)
+    reader.onload = async () => setPhoto(await downscaleImage(reader.result as string, 1600, 0.72))
     reader.readAsDataURL(file)
   }
 

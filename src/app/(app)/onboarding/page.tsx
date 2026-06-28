@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import TopBar from '@/components/layout/TopBar'
 import IndiaFlag from '@/components/ui/IndiaFlag'
 import LocationField from '@/components/ui/LocationField'
+import { downscaleImage } from '@/lib/utils/image'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function OnboardingPage() {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setLogo(reader.result as string)
+    reader.onload = async () => setLogo(await downscaleImage(reader.result as string, 512, 0.85))
     reader.readAsDataURL(file)
   }
 

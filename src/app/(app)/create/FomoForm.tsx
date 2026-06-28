@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCreate } from '@/store/create'
+import { downscaleImage } from '@/lib/utils/image'
 import { useProfile } from '@/store/profile'
 import { FOMO_BADGES, FOMO_LABELS, IMAGE_FORMATS } from '@/types'
 import type { BackgroundOption, FomoContent, FomoTemplate, ImageFormat } from '@/types'
@@ -41,8 +42,8 @@ export default function FomoForm() {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => {
-      const data = reader.result as string
+    reader.onload = async () => {
+      const data = await downscaleImage(reader.result as string, 1600, 0.78)
       setBgPhoto(data)
       setBackground({ type: 'photo', image_data: data })
     }

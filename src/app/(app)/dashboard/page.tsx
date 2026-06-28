@@ -6,6 +6,7 @@ import { useProfile } from '@/store/profile'
 import { useCreate } from '@/store/create'
 import type { BackgroundOption, ImageFormat, PostHistory } from '@/types'
 import Spinner from '@/components/ui/Spinner'
+import { downscaleImage } from '@/lib/utils/image'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function DashboardPage() {
     if (!file) return
     const reader = new FileReader()
     reader.onload = async () => {
-      const dataUrl = reader.result as string
+      const dataUrl = await downscaleImage(reader.result as string, 512, 0.85)
       setLogo(dataUrl) // optimistic, shows immediately
       setLogoBusy(true)
       try {

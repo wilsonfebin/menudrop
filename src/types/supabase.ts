@@ -1,6 +1,6 @@
 // Minimal generated-style typing for the Supabase client.
 // Regenerate with: supabase gen types typescript --project-id <id> > src/types/supabase.ts
-import type { Dish, PostCaptions } from '@/types'
+import type { Dish, LangCode, PostCaptions } from '@/types'
 
 export type Json =
   | string
@@ -27,6 +27,7 @@ export interface Database {
           location_name: string | null
           business_hours: string | null
           caption_language: 'en' | 'ml' | 'both'
+          second_language: LangCode | null
           brand_color: string | null
           created_at: string
           updated_at: string
@@ -47,6 +48,7 @@ export interface Database {
           captions: PostCaptions | Record<string, never>
           background: Json | null
           format: string | null
+          template: string | null
           image_url: string | null
           platform_used: string[]
           created_at: string
@@ -59,6 +61,7 @@ export interface Database {
           captions: PostCaptions
           background?: Json | null
           format?: string | null
+          template?: string | null
           image_url?: string | null
           platform_used?: string[]
         }

@@ -21,6 +21,7 @@ create table if not exists public.restaurant_profiles (
   location_name     text,
   business_hours    text,
   caption_language  text not null default 'en' check (caption_language in ('en','ml','both')),
+  second_language   text not null default 'ml' check (second_language in ('ml','ta','hi','kn','te','bn')),
   brand_color       text,
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now(),
@@ -37,6 +38,7 @@ create table if not exists public.post_history (
   captions        jsonb not null default '{}'::jsonb,
   background      jsonb,
   format          text,
+  template        text not null default 'classic',
   image_url       text,
   platform_used   text[] not null default '{}',
   created_at      timestamptz not null default now()
@@ -88,3 +90,12 @@ create policy "own posts"    on public.post_history
 
 create policy "own sub"      on public.subscriptions
   for select using (auth.uid() = user_id);
+
+-- ─── Migrations (safe to re-run on existing databases) ────────────────
+-- Second caption language (English is always generated alongside it).
+alter table public.restaurant_profiles
+  add column if not exists second_language text not null default 'ml';
+
+-- Selected specials poster template (classic / midnight / botanic / maroon / chalk).
+alter table public.post_history
+  add column if not exists template text not null default 'classic';

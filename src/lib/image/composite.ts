@@ -1,9 +1,17 @@
 import sharp from 'sharp'
 import { buildTextLayer } from '@/lib/image/text-layer'
 import { buildFomoLayer } from '@/lib/image/fomo-layer'
+import { buildSpecialsTemplate, isTemplate } from '@/lib/image/specials-templates'
 import { fetchDishPhoto } from '@/lib/image/stock'
 import { IMAGE_FORMATS } from '@/types'
-import type { BackgroundOption, Dish, FomoContent, ImageFormat, RestaurantProfile } from '@/types'
+import type {
+  BackgroundOption,
+  Dish,
+  FomoContent,
+  ImageFormat,
+  RestaurantProfile,
+  SpecialsTemplate,
+} from '@/types'
 
 interface RGB {
   r: number
@@ -113,6 +121,84 @@ function initials(name: string): string {
   return (words[0]?.slice(0, 2) || '·').toUpperCase()
 }
 
+// Hero photo for the template band: cover-cropped to the band size and
+// returned as a data URI so it embeds directly in the poster SVG.
+async function heroPhotoDataUri(
+  background: BackgroundOption,
+  dishes: Dish[],
+  w: number,
+  bandH: number
+): Promise<string | null> {
+  let buf: Buffer | null = null
+  if (background.type === 'photo') buf = dataUriToBuffer(background.image_data)
+  else if (background.type === 'dish_photo') {
+    const query = dishes.find((d) => d.name)?.name ?? 'restaurant food'
+    buf = await fetchDishPhoto(query)
+  }
+  if (!buf || buf.length < 100) return null
+  const out = await sharp(buf)
+    .rotate()
+    .resize(w, bandH, { fit: 'cover', position: sharp.strategy.attention })
+    .modulate({ saturation: 1.08 })
+    .jpeg({ quality: 82 })
+    .toBuffer()
+  return `data:image/jpeg;base64,${out.toString('base64')}`
+}
+
+async function logoDataUri(url: string | null, size: number): Promise<string | null> {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const src = Buffer.from(await res.arrayBuffer())
+    const out = await sharp(src)
+      .rotate()
+      .resize(size, size, { fit: 'cover', position: 'centre' })
+      .png()
+      .toBuffer()
+    return `data:image/png;base64,${out.toString('base64')}`
+  } catch {
+    return null
+  }
+}
+
+// Themed template poster: single self-contained SVG (photo + logo embedded),
+// rasterised in one pass.
+async function composeTemplateImage(
+  template: Exclude<SpecialsTemplate, 'classic'>,
+  dishes: Dish[],
+  background: BackgroundOption,
+  profile: Pick<
+    RestaurantProfile,
+    'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'location_name' | 'business_hours'
+  >,
+  w: number,
+  h: number
+): Promise<{ png: Buffer; source: string }> {
+  const bandH = Math.round(h * 0.34)
+  const photoHref = await heroPhotoDataUri(background, dishes, w, bandH)
+  const logoR = Math.round(h * 0.044)
+  const logoHref = await logoDataUri(profile.logo_url ?? null, logoR * 2)
+  const monogram = logoHref ? null : initials(profile.name)
+  const svg = buildSpecialsTemplate({
+    template,
+    dishes,
+    profile,
+    width: w,
+    height: h,
+    photoHref,
+    logoHref,
+    monogram,
+  })
+  const png = await sharp(Buffer.from(svg)).png({ quality: 92 }).toBuffer()
+  const source = photoHref
+    ? background.type === 'photo'
+      ? `${template}-user-photo`
+      : `${template}-dish-photo`
+    : `${template}-no-photo`
+  return { png, source }
+}
+
 /**
  * Stateless: dishes + background + profile + format -> attractive PNG Buffer
  * at the requested aspect ratio (square / portrait / story).
@@ -124,9 +210,17 @@ export async function composeSpecialsImage(
     RestaurantProfile,
     'name' | 'logo_url' | 'street' | 'city' | 'display_phone' | 'brand_color' | 'location_name' | 'business_hours'
   >,
-  format: ImageFormat = 'portrait'
+  format: ImageFormat = 'portrait',
+  template: SpecialsTemplate = 'classic'
 ): Promise<{ png: Buffer; source: string }> {
   const { w, h } = IMAGE_FORMATS[format] ?? IMAGE_FORMATS.portrait
+
+  // Themed template path (Midnight / Botanic / Royal / Chalkboard).
+  if (isTemplate(template)) {
+    return composeTemplateImage(template, dishes, background, profile, w, h)
+  }
+
+  // Classic photo-forward path.
   const { buffer: base, source } = await buildBackground(background, dishes, w, h)
   const logo = await buildLogoBadge(profile.logo_url ?? null, w)
   const monogram = logo ? null : initials(profile.name)

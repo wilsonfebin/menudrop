@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
-import type { BackgroundOption, Dish, FomoContent, ImageFormat, PostCaptions } from '@/types'
+import type {
+  BackgroundOption,
+  Dish,
+  FomoContent,
+  ImageFormat,
+  PostCaptions,
+  SpecialsTemplate,
+} from '@/types'
 import { isDemoMode, credsReady } from '@/lib/utils/env'
 import { uploadSpecials } from '@/lib/cloudinary'
 
@@ -58,6 +65,7 @@ export async function POST(req: NextRequest) {
     captions?: PostCaptions
     background?: BackgroundOption
     format?: ImageFormat
+    template?: SpecialsTemplate
     platforms?: string[]
     image_data?: string
   }
@@ -98,6 +106,7 @@ export async function POST(req: NextRequest) {
       captions: body.captions,
       background: (body.background ?? null) as never,
       format: body.format ?? null,
+      template: body.template ?? 'classic',
       image_url,
       platform_used: body.platforms ?? [],
     })

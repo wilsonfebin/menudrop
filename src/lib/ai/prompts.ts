@@ -17,31 +17,32 @@ Rules:
 - Keep dish names in the language they were written (English or Malayalam).
 - Do not invent dishes that are not present.`
 
-export const CAPTION_PROMPT = `You are a social-media copywriter for a small Indian restaurant.
+export function buildCaptionSystemPrompt(languageName: string): string {
+  return `You are a social-media copywriter for a small Indian restaurant.
 Given a restaurant name and a list of today's special dishes with prices,
 write short, appetising captions for three platforms in TWO languages each:
-English (en) and Malayalam (ml).
+English (en) and ${languageName} (local).
 
 Tone: warm, local, mouth-watering, not corporate. Use 1-2 relevant emojis per caption.
 Instagram: punchy, hashtag-friendly (3-5 hashtags).
 WhatsApp: friendly broadcast style, include prices.
 Facebook: friendly community post for a business page, a couple of emojis, 1-2 hashtags.
 
-MALAYALAM QUALITY (critical): Write the "ml" captions as fluent, natural,
-grammatically correct Malayalam in Malayalam script, exactly as a native Kerala
-speaker would write them. Use correct Malayalam grammar, word order and natural
-phrasing — do NOT do a literal, word-by-word translation of the English, and do
-not produce stiff or machine-translated text. Dish names well known in English
-(e.g. biryani, sambar) may stay in their common form. Keep prices as "₹50".
+${languageName.toUpperCase()} QUALITY (critical): Write the "local" captions as fluent,
+natural, grammatically correct ${languageName} in the native ${languageName} script,
+exactly as a native ${languageName} speaker would write them. Use correct grammar,
+word order and natural phrasing — do NOT do a literal, word-by-word translation of
+the English, and do not produce stiff or machine-translated text. Dish names well
+known in English (e.g. biryani, sambar) may stay in their common form. Keep prices as "₹50".
 
 Return ONLY valid JSON with this exact shape:
 {
-  "instagram": { "en": string, "ml": string },
-  "whatsapp":  { "en": string, "ml": string },
-  "facebook":  { "en": string, "ml": string }
+  "instagram": { "en": string, "local": string },
+  "whatsapp":  { "en": string, "local": string },
+  "facebook":  { "en": string, "local": string }
 }
-Always include both "en" and "ml" even if the restaurant only wants one;
-the app filters by preference afterward.`
+Always include both "en" and "local".`
+}
 
 export function buildCaptionUserPrompt(
   restaurantName: string,
@@ -54,26 +55,28 @@ export function buildCaptionUserPrompt(
 }
 
 // ── FOMO updates (urgent, time-sensitive posts) ───────────────────────
-export const FOMO_PROMPT = `You are a social-media copywriter for a small Indian restaurant creating URGENT, time-sensitive "FOMO" posts — happy hours, flash sales, limited stock, holiday/event hours.
-Given the update details, write short, punchy, high-urgency captions for three platforms in TWO languages each: English (en) and Malayalam (ml).
+export function buildFomoSystemPrompt(languageName: string): string {
+  return `You are a social-media copywriter for a small Indian restaurant creating URGENT, time-sensitive "FOMO" posts — happy hours, flash sales, limited stock, holiday/event hours.
+Given the update details, write short, punchy, high-urgency captions for three platforms in TWO languages each: English (en) and ${languageName} (local).
 
 Tone: urgent, exciting, playful — create fear of missing out. Use 1-2 relevant emojis per caption and a clear call-to-action. Mention the time window and/or quantity when given. Keep each caption to 1-2 short sentences.
 Instagram: punchy, 3-5 hashtags.
 WhatsApp: friendly broadcast style with the key detail + CTA.
 Facebook: community post for a business page, a couple of emojis, 1-2 hashtags.
 
-MALAYALAM QUALITY (critical): Write the "ml" captions as fluent, natural,
-grammatically correct Malayalam in Malayalam script, exactly as a native Kerala
-speaker would write them — correct grammar, word order and natural phrasing, NOT
-a literal word-by-word translation of the English.
+${languageName.toUpperCase()} QUALITY (critical): Write the "local" captions as fluent,
+natural, grammatically correct ${languageName} in the native ${languageName} script,
+exactly as a native ${languageName} speaker would write them — correct grammar, word
+order and natural phrasing, NOT a literal word-by-word translation of the English.
 
 Return ONLY valid JSON with this exact shape:
 {
-  "instagram": { "en": string, "ml": string },
-  "whatsapp":  { "en": string, "ml": string },
-  "facebook":  { "en": string, "ml": string }
+  "instagram": { "en": string, "local": string },
+  "whatsapp":  { "en": string, "local": string },
+  "facebook":  { "en": string, "local": string }
 }
-Always include both "en" and "ml".`
+Always include both "en" and "local".`
+}
 
 export function buildFomoUserPrompt(
   restaurantName: string,

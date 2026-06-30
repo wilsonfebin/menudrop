@@ -1,4 +1,11 @@
-import type { BackgroundOption, Dish, FomoContent, ImageFormat, RestaurantProfile } from '@/types'
+import type {
+  BackgroundOption,
+  Dish,
+  FomoContent,
+  ImageFormat,
+  RestaurantProfile,
+  SpecialsTemplate,
+} from '@/types'
 
 type ProfilePayload = Pick<
   RestaurantProfile,
@@ -10,12 +17,13 @@ export async function requestSpecialsBlob(
   dishes: Dish[],
   background: BackgroundOption,
   profile: ProfilePayload,
-  format: ImageFormat = 'portrait'
+  format: ImageFormat = 'portrait',
+  template: SpecialsTemplate = 'classic'
 ): Promise<Blob> {
   const res = await fetch('/api/image/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'special', dishes, background, profile, format }),
+    body: JSON.stringify({ type: 'special', dishes, background, profile, format, template }),
   })
   if (!res.ok) throw new Error('Image generation failed')
   return res.blob()

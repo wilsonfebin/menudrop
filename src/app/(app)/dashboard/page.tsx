@@ -11,7 +11,8 @@ import { downscaleImage } from '@/lib/utils/image'
 export default function DashboardPage() {
   const router = useRouter()
   const { profile, fetch: fetchProfile, setLogo } = useProfile()
-  const { setMode, setDishes, setFomo, setCaptions, setBackground, setFormat } = useCreate()
+  const { setMode, setDishes, setFomo, setCaptions, setBackground, setFormat, setTemplate } =
+    useCreate()
   const [posts, setPosts] = useState<PostHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [logoBusy, setLogoBusy] = useState(false)
@@ -60,6 +61,7 @@ export default function DashboardPage() {
     if (post.captions) setCaptions(post.captions)
     setBackground((post.background as BackgroundOption) ?? { type: 'dish_photo' })
     setFormat((post.format as ImageFormat) ?? 'portrait')
+    if (post.kind !== 'fomo') setTemplate(post.template ?? 'classic')
     router.push('/create/output')
   }
 

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
-import type { Dish } from '@/types'
+import type { Dish, LangCode } from '@/types'
+import { SECOND_LANGUAGES } from '@/types'
 import { generateCaptions } from '@/lib/ai/generate'
 import { checkCanPost } from '@/lib/gating'
 import { credsReady } from '@/lib/utils/env'
@@ -11,13 +12,21 @@ import { DEMO_CAPTIONS } from '@/lib/utils/demo'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
-  let body: { restaurantName?: string; dishes?: Dish[]; platforms?: string[] }
+  let body: {
+    restaurantName?: string
+    dishes?: Dish[]
+    platforms?: string[]
+    language?: LangCode
+  }
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
+  const lang: LangCode = SECOND_LANGUAGES.includes(body.language as LangCode)
+    ? (body.language as LangCode)
+    : 'ml'
   const dishes = body.dishes ?? []
   if (dishes.length === 0) {
     return NextResponse.json({ error: 'No dishes provided' }, { status: 400 })
@@ -52,7 +61,8 @@ export async function POST(req: NextRequest) {
   try {
     const captions = await generateCaptions(
       body.restaurantName ?? 'Our restaurant',
-      dishes
+      dishes,
+      lang
     )
 
     return NextResponse.json({ captions })

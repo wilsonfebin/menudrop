@@ -7,6 +7,7 @@ import type {
   GenerateImageRequest,
   ImageFormat,
   RestaurantProfile,
+  SpecialsTemplate,
 } from '@/types'
 
 export const maxDuration = 30
@@ -15,6 +16,7 @@ type Body = GenerateImageRequest & {
   type?: 'special' | 'fomo'
   format?: ImageFormat
   fomo?: FomoContent
+  template?: SpecialsTemplate
 }
 
 // Stateless image generation. Returns a PNG directly in the response body.
@@ -57,7 +59,13 @@ export async function POST(req: NextRequest) {
       if (dishes.length === 0) {
         return NextResponse.json({ error: 'No dishes provided' }, { status: 400 })
       }
-      ;({ png, source } = await composeSpecialsImage(dishes, background, profile, format))
+      ;({ png, source } = await composeSpecialsImage(
+        dishes,
+        background,
+        profile,
+        format,
+        body.template ?? 'classic'
+      ))
     }
 
     console.log('[image] type:', body.type ?? 'special', 'background:', background?.type, '-> used:', source)

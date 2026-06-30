@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase/client'
 import { useRazorpayScript } from '@/hooks/useRazorpay'
 import IndiaFlag from '@/components/ui/IndiaFlag'
 import LocationField from '@/components/ui/LocationField'
-import type { Plan } from '@/types'
+import LanguageSelect from '@/components/ui/LanguageSelect'
+import type { LangCode, Plan } from '@/types'
 
 const PLANS: { key: Exclude<Plan, 'free'>; label: string; price: number; perk: string }[] = [
   { key: 'starter', label: 'Starter', price: 199, perk: 'Unlimited posts' },
@@ -42,6 +43,7 @@ export default function SettingsPage() {
     maps_link: '',
     location_name: '',
     business_hours: '',
+    second_language: 'ml' as LangCode,
   })
   const [loginPhone, setLoginPhone] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -62,6 +64,7 @@ export default function SettingsPage() {
         maps_link: profile.maps_link ?? '',
         location_name: profile.location_name ?? '',
         business_hours: profile.business_hours ?? '',
+        second_language: (profile.second_language ?? 'ml') as LangCode,
       })
   }, [profile])
 
@@ -214,19 +217,12 @@ export default function SettingsPage() {
             onChange={(e) => setForm({ ...form, business_hours: e.target.value })}
           />
         </Field>
-        {fmtLogin && (
-          <Field label="Login number">
-            <input
-              className="input bg-ui-bg text-ui-text-sec cursor-not-allowed"
-              value={fmtLogin}
-              disabled
-              readOnly
-            />
-            <p className="text-[11px] text-ui-text-ter mt-1">
-              The number you signed in with — your account ID. It can&apos;t be changed.
-            </p>
-          </Field>
-        )}
+        <Field label="Caption language (English is always included)">
+          <LanguageSelect
+            value={form.second_language}
+            onChange={(l) => setForm({ ...form, second_language: l })}
+          />
+        </Field>
         <button onClick={save} disabled={saving} className="btn-primary w-full">
           {saving ? 'Saving…' : 'Save changes'}
         </button>

@@ -5,7 +5,9 @@ import type {
   Dish,
   FomoContent,
   ImageFormat,
+  LangCode,
   PostCaptions,
+  SpecialsTemplate,
 } from '@/types'
 
 interface CreateStore {
@@ -21,6 +23,8 @@ interface CreateStore {
   captions: PostCaptions | null
   background: BackgroundOption
   format: ImageFormat
+  secondLang: LangCode
+  template: SpecialsTemplate
   // setters
   setMode: (m: 'special' | 'fomo') => void
   setInputType: (t: 'photo' | 'text') => void
@@ -35,6 +39,8 @@ interface CreateStore {
   setCaptions: (c: PostCaptions) => void
   setBackground: (b: BackgroundOption) => void
   setFormat: (f: ImageFormat) => void
+  setSecondLang: (l: LangCode) => void
+  setTemplate: (t: SpecialsTemplate) => void
   reset: () => void
 }
 
@@ -51,7 +57,9 @@ export const useCreate = create<CreateStore>()(
   fomo: null,
   captions: null,
   background: initialBackground,
-  format: 'portrait',
+  format: 'story',
+  secondLang: 'ml',
+  template: 'midnight',
 
   setMode: (mode) => set({ mode }),
   setInputType: (inputType) => set({ inputType }),
@@ -81,6 +89,8 @@ export const useCreate = create<CreateStore>()(
   setCaptions: (captions) => set({ captions }),
   setBackground: (background) => set({ background }),
   setFormat: (format) => set({ format }),
+  setSecondLang: (secondLang) => set({ secondLang }),
+  setTemplate: (template) => set({ template }),
   reset: () =>
     set({
       mode: 'special',
@@ -91,11 +101,22 @@ export const useCreate = create<CreateStore>()(
       fomo: null,
       captions: null,
       background: initialBackground,
-      format: 'portrait',
+      format: 'story',
+      // secondLang and template are intentionally preserved across resets
+      // (they're preferences, not per-post content).
     }),
     }),
     {
       name: 'menudrop-create',
+      // Bumped so older persisted sessions (which pinned a square/portrait
+      // size) are migrated — every post is 9:16 now.
+      version: 1,
+      migrate: (persisted) => {
+        if (persisted && typeof persisted === 'object') {
+          delete (persisted as Record<string, unknown>).format
+        }
+        return persisted as CreateStore
+      },
       // Guard sessionStorage writes — never let a quota error reach the user.
       storage: createJSONStorage(() => ({
         getItem: (k) => sessionStorage.getItem(k),
@@ -122,7 +143,10 @@ export const useCreate = create<CreateStore>()(
           state.background.type === 'photo'
             ? ({ type: 'plain' } as BackgroundOption)
             : state.background,
-        format: state.format,
+        // format is intentionally NOT persisted — all posts are 9:16, so it
+        // always resolves to the 'story' default.
+        secondLang: state.secondLang,
+        template: state.template,
       }),
     }
   )

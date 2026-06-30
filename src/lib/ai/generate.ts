@@ -1,18 +1,16 @@
 import { getOpenAI, TEXT_MODEL } from '@/lib/ai/client'
-import { CAPTION_PROMPT, buildCaptionUserPrompt } from '@/lib/ai/prompts'
+import { buildCaptionSystemPrompt, buildCaptionUserPrompt } from '@/lib/ai/prompts'
 import { withRetry } from '@/lib/utils/retry'
-import type { Dish, PostCaptions } from '@/types'
-
-const EMPTY: PostCaptions = {
-  instagram: { en: '', ml: '' },
-  whatsapp: { en: '', ml: '' },
-  facebook: { en: '', ml: '' },
-}
+import { LANGUAGES } from '@/types'
+import type { Dish, LangCode, PostCaptions } from '@/types'
 
 export async function generateCaptions(
   restaurantName: string,
-  dishes: Dish[]
+  dishes: Dish[],
+  lang: LangCode = 'ml'
 ): Promise<PostCaptions> {
+  const languageName = LANGUAGES[lang] ?? LANGUAGES.ml
+  const empty = { en: '', local: '' }
   const openai = getOpenAI()
   return withRetry(async () => {
     const res = await openai.chat.completions.create({
@@ -20,7 +18,7 @@ export async function generateCaptions(
       temperature: 0.7,
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: CAPTION_PROMPT },
+        { role: 'system', content: buildCaptionSystemPrompt(languageName) },
         {
           role: 'user',
           content: buildCaptionUserPrompt(
@@ -32,11 +30,12 @@ export async function generateCaptions(
     })
     const content = res.choices[0]?.message?.content ?? '{}'
     const cleaned = content.replace(/```json|```/g, '').trim()
-    const parsed = JSON.parse(cleaned) as Partial<PostCaptions>
+    const parsed = JSON.parse(cleaned) as Partial<Omit<PostCaptions, 'lang'>>
     return {
-      instagram: { ...EMPTY.instagram, ...parsed.instagram },
-      whatsapp: { ...EMPTY.whatsapp, ...parsed.whatsapp },
-      facebook: { ...EMPTY.facebook, ...parsed.facebook },
+      lang,
+      instagram: { ...empty, ...parsed.instagram },
+      whatsapp: { ...empty, ...parsed.whatsapp },
+      facebook: { ...empty, ...parsed.facebook },
     }
   })
 }

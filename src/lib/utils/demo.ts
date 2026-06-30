@@ -15,31 +15,33 @@ export const DEMO_DISHES: Dish[] = [
 ]
 
 export const DEMO_CAPTIONS: PostCaptions = {
+  lang: 'ml',
   instagram: {
     en: "🔥 Today's specials are here! Fish curry, chicken biryani & hot parotta — fresh off the kitchen. Come hungry! 🍛 #TodaysSpecial #Foodie #Kerala",
-    ml: "🔥 ഇന്നത്തെ സ്പെഷ്യൽ! ഫിഷ് കറി, ചിക്കൻ ബിരിയാണി, ചൂട് പൊറോട്ട — ഇപ്പോൾ തന്നെ വരൂ! 🍛 #TodaysSpecial",
+    local: "🔥 ഇന്നത്തെ സ്പെഷ്യൽ! ഫിഷ് കറി, ചിക്കൻ ബിരിയാണി, ചൂട് പൊറോട്ട — ഇപ്പോൾ തന്നെ വരൂ! 🍛 #TodaysSpecial",
   },
   whatsapp: {
     en: "🍛 *Today's Specials*\nFish curry – ₹120\nChicken biryani – ₹180\nParotta – ₹30\nFish fry – ₹90\nOrder now! 📞",
-    ml: "🍛 *ഇന്നത്തെ സ്പെഷ്യൽ*\nഫിഷ് കറി – ₹120\nചിക്കൻ ബിരിയാണി – ₹180\nപൊറോട്ട – ₹30\nഫിഷ് ഫ്രൈ – ₹90\nഇപ്പോൾ ഓർഡർ ചെയ്യൂ! 📞",
+    local: "🍛 *ഇന്നത്തെ സ്പെഷ്യൽ*\nഫിഷ് കറി – ₹120\nചിക്കൻ ബിരിയാണി – ₹180\nപൊറോട്ട – ₹30\nഫിഷ് ഫ്രൈ – ₹90\nഇപ്പോൾ ഓർഡർ ചെയ്യൂ! 📞",
   },
   facebook: {
     en: "Today's specials are ready! 🍛 Fresh fish curry, chicken biryani, hot parotta & crispy fish fry. Dine in or take away. #Kochi #Foodie",
-    ml: "ഇന്നത്തെ സ്പെഷ്യൽ റെഡി! 🍛 ഫിഷ് കറി, ചിക്കൻ ബിരിയാണി, ചൂട് പൊറോട്ട, ഫിഷ് ഫ്രൈ. ഡൈൻ ഇൻ / ടേക്ക് എവേ. #Kochi",
+    local: "ഇന്നത്തെ സ്പെഷ്യൽ റെഡി! 🍛 ഫിഷ് കറി, ചിക്കൻ ബിരിയാണി, ചൂട് പൊറോട്ട, ഫിഷ് ഫ്രൈ. ഡൈൻ ഇൻ / ടേക്ക് എവേ. #Kochi",
   },
 }
 
 export const DEMO_FOMO_CAPTIONS: PostCaptions = {
+  lang: 'ml',
   instagram: {
     en: '⚡ FLASH SALE! First 10 guests, 2–4 PM today get a FREE dessert with any main. Run! 🍰 #FlashSale #Kochi #Foodie',
-    ml: '⚡ ഫ്ലാഷ് സെയിൽ! ഇന്ന് 2–4 PM, ആദ്യ 10 പേർക്ക് ഏത് മെയിനിനൊപ്പവും ഫ്രീ ഡെസ്സർട്ട്! വേഗം വരൂ 🍰 #FlashSale',
+    local: '⚡ ഫ്ലാഷ് സെയിൽ! ഇന്ന് 2–4 PM, ആദ്യ 10 പേർക്ക് ഏത് മെയിനിനൊപ്പവും ഫ്രീ ഡെസ്സർട്ട്! വേഗം വരൂ 🍰 #FlashSale',
   },
   whatsapp: {
     en: '⚡ *Flash Sale — today only!*\nFirst 10 guests between 2–4 PM get a FREE dessert with any main course. See you soon! 🏃',
-    ml: '⚡ *ഫ്ലാഷ് സെയിൽ — ഇന്ന് മാത്രം!*\n2–4 PM ന് ഇടയിൽ ആദ്യ 10 പേർക്ക് ഏത് മെയിനിനൊപ്പവും ഫ്രീ ഡെസ്സർട്ട്! 🏃',
+    local: '⚡ *ഫ്ലാഷ് സെയിൽ — ഇന്ന് മാത്രം!*\n2–4 PM ന് ഇടയിൽ ആദ്യ 10 പേർക്ക് ഏത് മെയിനിനൊപ്പവും ഫ്രീ ഡെസ്സർട്ട്! 🏃',
   },
   facebook: {
     en: '⚡ Flash sale today! First 10 guests between 2–4 PM get a free dessert with any main. Don’t miss out! #Kochi',
-    ml: '⚡ ഇന്ന് ഫ്ലാഷ് സെയിൽ! 2–4 PM ന് ആദ്യ 10 പേർക്ക് ഫ്രീ ഡെസ്സർട്ട്. മിസ്സാക്കരുത്! #Kochi',
+    local: '⚡ ഇന്ന് ഫ്ലാഷ് സെയിൽ! 2–4 PM ന് ആദ്യ 10 പേർക്ക് ഫ്രീ ഡെസ്സർട്ട്. മിസ്സാക്കരുത്! #Kochi',
   },
 }

@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       location_name: null,
       business_hours: null,
       caption_language: 'both',
+      second_language: 'ml',
       brand_color: '#185FA5',
       city: null,
       display_phone: null,

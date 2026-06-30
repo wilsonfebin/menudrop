@@ -11,10 +11,26 @@ export interface RestaurantProfile {
   location_name: string | null
   business_hours: string | null
   caption_language: 'en' | 'ml' | 'both'
+  second_language: LangCode | null
   brand_color: string | null
   created_at: string
   updated_at: string
 }
+
+// English is always generated; the second language is selectable.
+export type LangCode = 'en' | 'ml' | 'ta' | 'hi' | 'kn' | 'te' | 'bn'
+
+export const LANGUAGES: Record<LangCode, string> = {
+  en: 'English',
+  ml: 'Malayalam',
+  ta: 'Tamil',
+  hi: 'Hindi',
+  kn: 'Kannada',
+  te: 'Telugu',
+  bn: 'Bengali',
+}
+
+export const SECOND_LANGUAGES: LangCode[] = ['ml', 'ta', 'hi', 'kn', 'te', 'bn']
 
 export interface Dish {
   name: string
@@ -24,10 +40,12 @@ export interface Dish {
   veg?: 'veg' | 'nonveg' | 'vegan' | null
 }
 
+// `en` is always English; `local` is the chosen second language (code in `lang`).
 export interface PostCaptions {
-  instagram: { en: string; ml: string }
-  whatsapp: { en: string; ml: string }
-  facebook: { en: string; ml: string }
+  lang: LangCode
+  instagram: { en: string; local: string }
+  whatsapp: { en: string; local: string }
+  facebook: { en: string; local: string }
 }
 
 // ── FOMO updates (urgent, time-sensitive posts) ───────────────────────
@@ -68,6 +86,7 @@ export interface PostHistory {
   captions: PostCaptions
   background: BackgroundOption | null
   format: ImageFormat | null
+  template: SpecialsTemplate | null
   image_url: string | null
   platform_used: string[]
   created_at: string
@@ -100,6 +119,24 @@ export interface Subscription {
   created_at: string
   updated_at: string
 }
+
+// ── Specials poster templates (selectable looks) ──────────────────────
+// 'classic' = the original photo-forward overlay. The rest are themed
+// layouts: logo badge, "Today's SPECIALS" header, featured-dish ribbon,
+// dotted-leader price list, and a hero photo band at the bottom.
+export type SpecialsTemplate = 'classic' | 'midnight' | 'botanic' | 'maroon' | 'chalk'
+
+export const SPECIALS_TEMPLATES: {
+  id: SpecialsTemplate
+  label: string
+  swatch: [string, string]
+}[] = [
+  { id: 'midnight', label: 'Midnight', swatch: ['#14130F', '#F0871E'] },
+  { id: 'botanic', label: 'Botanic', swatch: ['#F4F0E5', '#1F5A3A'] },
+  { id: 'maroon', label: 'Royal', swatch: ['#3A0E10', '#E3B860'] },
+  { id: 'chalk', label: 'Chalkboard', swatch: ['#1B1B19', '#E08A3C'] },
+  { id: 'classic', label: 'Classic', swatch: ['#0C447C', '#FFC65C'] },
+]
 
 export type ImageFormat = 'square' | 'portrait' | 'story'
 

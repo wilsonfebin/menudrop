@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCreate } from '@/store/create'
 import { useProfile } from '@/store/profile'
 import { requestSpecialsBlob, requestFomoBlob, triggerDownload } from '@/lib/utils/download'
-import { IMAGE_FORMATS } from '@/types'
+import { IMAGE_FORMATS, LANGUAGES } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 
 type Platform = 'whatsapp' | 'instagram' | 'facebook'
@@ -42,10 +42,10 @@ function BrandIcon({ name, size = 18 }: { name: Platform; size?: number }) {
 
 export default function OutputPage() {
   const router = useRouter()
-  const { mode, dishes, fomo, captions, background, format, updateFomo, setCaptions, reset } =
+  const { mode, dishes, fomo, captions, background, format, template, updateFomo, setCaptions, reset } =
     useCreate()
   const { profile, fetch: fetchProfile } = useProfile()
-  const [lang, setLang] = useState<'en' | 'ml'>('en')
+  const [lang, setLang] = useState<'en' | 'local'>('en')
   const [copied, setCopied] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -98,7 +98,7 @@ export default function OutputPage() {
       const blob =
         mode === 'fomo' && fomo
           ? await requestFomoBlob(fomo, background, profilePayload(), format)
-          : await requestSpecialsBlob(dishes, background, profilePayload(), format)
+          : await requestSpecialsBlob(dishes, background, profilePayload(), format, template)
       if (id !== reqId.current) return
       previewBlob.current = blob
       setPreviewUrl((old) => {
@@ -110,7 +110,7 @@ export default function OutputPage() {
     } finally {
       if (id === reqId.current) setGenerating(false)
     }
-  }, [captions, mode, dishes, fomo, background, format, profilePayload])
+  }, [captions, mode, dishes, fomo, background, format, template, profilePayload])
 
   useEffect(() => {
     generate()
@@ -139,7 +139,7 @@ export default function OutputPage() {
     const blob =
       mode === 'fomo' && fomo
         ? await requestFomoBlob(fomo, background, profilePayload(), format)
-        : await requestSpecialsBlob(dishes, background, profilePayload(), format)
+        : await requestSpecialsBlob(dishes, background, profilePayload(), format, template)
     previewBlob.current = blob
     return blob
   }
@@ -156,7 +156,11 @@ export default function OutputPage() {
       const res = await fetch('/api/ai/fomo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantName: profile?.name ?? 'Our restaurant', content: updated }),
+        body: JSON.stringify({
+          restaurantName: profile?.name ?? 'Our restaurant',
+          content: updated,
+          language: captions?.lang,
+        }),
       })
       const data = await res.json()
       if (res.ok) setCaptions(data.captions)
@@ -184,7 +188,7 @@ export default function OutputPage() {
       await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: mode, dishes, fomo, captions, background, format, platforms, image_data }),
+        body: JSON.stringify({ kind: mode, dishes, fomo, captions, background, format, template, platforms, image_data }),
       })
     } catch {
       savedRef.current = false
@@ -299,7 +303,7 @@ export default function OutputPage() {
       )}
 
       <div className="flex gap-2 mb-3">
-        {(['en', 'ml'] as const).map((l) => (
+        {(['en', 'local'] as const).map((l) => (
           <button
             key={l}
             onClick={() => setLang(l)}
@@ -309,7 +313,7 @@ export default function OutputPage() {
                 : 'bg-white text-ui-text-sec border-ui-border'
             }`}
           >
-            {l === 'en' ? 'English' : 'Malayalam'}
+            {l === 'en' ? 'English' : LANGUAGES[captions.lang] ?? 'Malayalam'}
           </button>
         ))}
       </div>

@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useCreate } from '@/store/create'
 import { downscaleImage } from '@/lib/utils/image'
 import { useProfile } from '@/store/profile'
-import { IMAGE_FORMATS } from '@/types'
-import type { BackgroundOption, ImageFormat } from '@/types'
+import { SPECIALS_TEMPLATES } from '@/types'
+import type { BackgroundOption } from '@/types'
 import TopBar from '@/components/layout/TopBar'
+import LanguageSelect from '@/components/ui/LanguageSelect'
 
 type BgKind = 'photo' | 'dish_photo' | 'brand_color'
 
@@ -21,8 +22,10 @@ export default function ConfirmPage() {
     setBackground,
     setCaptions,
     photoData,
-    format,
-    setFormat,
+    secondLang,
+    setSecondLang,
+    template,
+    setTemplate,
   } = useCreate()
   const { profile, fetch: fetchProfile } = useProfile()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -34,6 +37,15 @@ export default function ConfirmPage() {
   useEffect(() => {
     if (!profile) fetchProfile()
   }, [profile, fetchProfile])
+
+  // Seed the language from the saved profile default once it's available.
+  const seededLang = useRef(false)
+  useEffect(() => {
+    if (!seededLang.current && profile?.second_language) {
+      seededLang.current = true
+      setSecondLang(profile.second_language)
+    }
+  }, [profile?.second_language, setSecondLang])
 
   useEffect(() => {
     fetch('/api/config', { cache: 'no-store' })
@@ -98,6 +110,7 @@ export default function ConfirmPage() {
           restaurantName: profile?.name ?? 'Our restaurant',
           dishes,
           platforms: ['instagram', 'whatsapp', 'facebook'],
+          language: secondLang,
         }),
       })
       const data = await res.json()
@@ -179,6 +192,37 @@ export default function ConfirmPage() {
         + Add a dish
       </button>
 
+      <h2 className="text-sm font-semibold text-ui-text mb-2">Template</h2>
+      <div className="grid grid-cols-5 gap-1.5 mb-5">
+        {SPECIALS_TEMPLATES.map((tpl) => {
+          const active = template === tpl.id
+          return (
+            <button
+              key={tpl.id}
+              onClick={() => setTemplate(tpl.id)}
+              className={`flex flex-col items-center gap-1 rounded-lg border p-1 transition ${
+                active ? 'border-brand-blue ring-2 ring-brand-blue/30' : 'border-ui-border'
+              }`}
+            >
+              <span
+                className="h-6 w-full rounded-md border border-black/5 overflow-hidden flex"
+                aria-hidden
+              >
+                <span className="h-full w-1/2" style={{ background: tpl.swatch[0] }} />
+                <span className="h-full w-1/2" style={{ background: tpl.swatch[1] }} />
+              </span>
+              <span
+                className={`text-[10px] font-medium truncate w-full text-center ${
+                  active ? 'text-brand-blue' : 'text-ui-text-ter'
+                }`}
+              >
+                {tpl.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
       <h2 className="text-sm font-semibold text-ui-text mb-2">Background</h2>
       <div className="grid grid-cols-3 gap-1.5 mb-2">
         {options.map((o) => {
@@ -245,32 +289,13 @@ export default function ConfirmPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-1.5 mt-5">
-        <h2 className="text-sm font-semibold text-ui-text">Size</h2>
-        <span className="text-xs text-ui-text-ter">{IMAGE_FORMATS[format].hint}</span>
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 mb-2">
-        {(Object.keys(IMAGE_FORMATS) as ImageFormat[]).map((f) => {
-          const fmt = IMAGE_FORMATS[f]
-          const active = format === f
-          return (
-            <button
-              key={f}
-              onClick={() => setFormat(f)}
-              className={`min-w-0 rounded-lg border px-1 py-2 text-center text-xs font-medium truncate ${
-                active
-                  ? 'bg-brand-blue text-white border-brand-blue'
-                  : 'bg-white text-ui-text-sec border-ui-border'
-              }`}
-            >
-              {fmt.label}{' '}
-              <span className={active ? 'text-white/70' : 'text-ui-text-ter'}>{fmt.ratio}</span>
-            </button>
-          )
-        })}
-      </div>
+      <h2 className="text-sm font-semibold text-ui-text mb-1.5 mt-5">Caption language</h2>
+      <LanguageSelect value={secondLang} onChange={setSecondLang} />
+      <p className="text-[11px] text-ui-text-ter mt-1.5">
+        English is always included. Pick the second language for your captions.
+      </p>
 
-      {error && <p className="text-sm text-red-600 mb-3 mt-3">{error}</p>}
+      {error && <p className="text-sm text-red-600 mb-3 mt-5">{error}</p>}
       <button
         onClick={generate}
         disabled={loading || dishes.length === 0}

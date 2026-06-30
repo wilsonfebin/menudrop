@@ -1,21 +1,38 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCreate } from '@/store/create'
 import { downscaleImage } from '@/lib/utils/image'
 import { useProfile } from '@/store/profile'
-import { FOMO_BADGES, FOMO_LABELS, IMAGE_FORMATS } from '@/types'
-import type { BackgroundOption, FomoContent, FomoTemplate, ImageFormat } from '@/types'
+import { FOMO_BADGES, FOMO_LABELS } from '@/types'
+import type { BackgroundOption, FomoContent, FomoTemplate } from '@/types'
+import LanguageSelect from '@/components/ui/LanguageSelect'
 
 type BgKind = 'photo' | 'dish_photo' | 'brand_color'
 const TEMPLATES: FomoTemplate[] = ['happy_hour', 'flash_sale', 'limited', 'holiday', 'custom']
 
 export default function FomoForm() {
   const router = useRouter()
-  const { setMode, setFomo, setCaptions, background, setBackground, format, setFormat, photoData } =
-    useCreate()
+  const {
+    setMode,
+    setFomo,
+    setCaptions,
+    background,
+    setBackground,
+    photoData,
+    secondLang,
+    setSecondLang,
+  } = useCreate()
   const { profile, fetch: fetchProfile } = useProfile()
   const fileRef = useRef<HTMLInputElement>(null)
+  const seededLang = useRef(false)
+
+  useEffect(() => {
+    if (!seededLang.current && profile?.second_language) {
+      seededLang.current = true
+      setSecondLang(profile.second_language)
+    }
+  }, [profile?.second_language, setSecondLang])
 
   const [template, setTemplate] = useState<FomoTemplate>('flash_sale')
   const [headline, setHeadline] = useState('')
@@ -71,7 +88,11 @@ export default function FomoForm() {
       const res = await fetch('/api/ai/fomo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantName: profile?.name ?? 'Our restaurant', content }),
+        body: JSON.stringify({
+          restaurantName: profile?.name ?? 'Our restaurant',
+          content,
+          language: secondLang,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Could not create update')
@@ -193,31 +214,10 @@ export default function FomoForm() {
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickBgPhoto} />
 
-      <div className="flex items-center justify-between mb-1.5 mt-5">
-        <h2 className="text-sm font-semibold text-ui-text">Size</h2>
-        <span className="text-xs text-ui-text-ter">{IMAGE_FORMATS[format].hint}</span>
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 mb-2">
-        {(Object.keys(IMAGE_FORMATS) as ImageFormat[]).map((f) => {
-          const fmt = IMAGE_FORMATS[f]
-          const active = format === f
-          return (
-            <button
-              key={f}
-              onClick={() => setFormat(f)}
-              className={`min-w-0 rounded-lg border px-1 py-2 text-center text-xs font-medium truncate ${
-                active
-                  ? 'bg-brand-blue text-white border-brand-blue'
-                  : 'bg-white text-ui-text-sec border-ui-border'
-              }`}
-            >
-              {fmt.label} <span className={active ? 'text-white/70' : 'text-ui-text-ter'}>{fmt.ratio}</span>
-            </button>
-          )
-        })}
-      </div>
+      <h2 className="text-sm font-semibold text-ui-text mb-1.5 mt-5">Caption language</h2>
+      <LanguageSelect value={secondLang} onChange={setSecondLang} />
 
-      {error && <p className="text-sm text-red-600 mb-3 mt-2">{error}</p>}
+      {error && <p className="text-sm text-red-600 mb-3 mt-5">{error}</p>}
       <button onClick={createUpdate} disabled={loading} className="btn-primary w-full mt-3">
         {loading ? 'Writing captions…' : 'Create update →'}
       </button>

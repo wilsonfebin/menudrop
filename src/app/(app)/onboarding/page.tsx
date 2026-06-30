@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation'
 import TopBar from '@/components/layout/TopBar'
 import IndiaFlag from '@/components/ui/IndiaFlag'
 import LocationField from '@/components/ui/LocationField'
+import LanguageSelect from '@/components/ui/LanguageSelect'
 import { downscaleImage } from '@/lib/utils/image'
+import type { LangCode } from '@/types'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -14,7 +16,7 @@ export default function OnboardingPage() {
     display_phone: '',
     maps_link: '',
     location_name: '',
-    caption_language: 'both' as 'en' | 'ml' | 'both',
+    second_language: 'ml' as LangCode,
   })
   const [logo, setLogo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -140,22 +142,13 @@ export default function OnboardingPage() {
 
         <div>
           <label className="block text-sm font-medium text-ui-text mb-1">Caption language</label>
-          <div className="flex gap-2">
-            {(['en', 'ml', 'both'] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setForm({ ...form, caption_language: l })}
-                className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium ${
-                  form.caption_language === l
-                    ? 'bg-brand-blue text-white border-brand-blue'
-                    : 'bg-white text-ui-text-sec border-ui-border'
-                }`}
-              >
-                {l === 'en' ? 'English' : l === 'ml' ? 'Malayalam' : 'Both'}
-              </button>
-            ))}
-          </div>
+          <LanguageSelect
+            value={form.second_language}
+            onChange={(l) => setForm({ ...form, second_language: l })}
+          />
+          <p className="text-[11px] text-ui-text-ter mt-1.5">
+            English is always included. Choose the second language. You can change this per post.
+          </p>
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
